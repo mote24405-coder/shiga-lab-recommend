@@ -1,38 +1,160 @@
 {% extends "base.html" %}
 {% block title %}研究室一覧{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold text-blue-800 mb-6">研究室一覧</h1>
 
-<div class="flex flex-col lg:flex-row gap-6">
-  <!-- ラベル絞り込みパネル -->
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-slate-800 tracking-tight">研究室一覧</h1>
+  {% set selected_count = selected_label_ids | length %}
+  {% if selected_count > 0 %}
+  <a href="/labs" class="text-xs text-slate-400 hover:text-red-500 transition">
+    絞り込みをクリア（{{ selected_count }}件）
+  </a>
+  {% endif %}
+</div>
+
+<div class="flex flex-col lg:flex-row gap-8">
+
+  <!-- フィルタパネル -->
   <aside class="lg:w-56 flex-shrink-0">
-    <div class="bg-white border border-gray-200 rounded-xl p-4 sticky top-4">
-      <h2 class="font-semibold text-gray-700 mb-3 text-sm">ラベルで絞り込み</h2>
+    <div class="sticky top-16 flex flex-col" style="max-height: calc(100vh - 5rem)">
+      <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+        <p class="text-xs font-semibold text-slate-600 uppercase tracking-wider">絞り込み</p>
+        {% if selected_count > 0 %}
+        <span class="text-xs font-mono bg-teal-50 text-teal-700 border border-teal-200 px-1.5 py-0.5 rounded">
+          {{ selected_count }}
+        </span>
+        {% endif %}
+      </div>
 
-      {% set type_names = {"method": "手法", "data": "データ", "theme": "テーマ"} %}
-      {% for ltype, ltype_name in type_names.items() %}
-      <div class="mb-4">
-        <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{{ ltype_name }}</div>
-        {% for label in labels_all if label.label_type == ltype %}
-        <label class="flex items-center gap-2 text-sm py-0.5 cursor-pointer hover:text-blue-600">
-          <input type="checkbox" name="label_ids" value="{{ label.id }}"
-                 {% if label.id in selected_label_ids %}checked{% endif %}
-                 class="label-filter-cb"
-                 hx-get="/labs/partial"
-                 hx-include=".label-filter-cb"
-                 hx-target="#lab-list"
-                 hx-trigger="change">
-          {{ label.name }}
-        </label>
+      <!-- OR / AND トグル -->
+      <div class="flex items-center gap-1 mb-4">
+        <span class="text-xs text-slate-400 mr-1">検索:</span>
+        <button type="button" id="btn-or"
+                class="text-xs font-mono px-2 py-0.5 rounded border transition-colors
+                       {% if match_mode != 'and' %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-500 border-slate-200 hover:border-slate-400{% endif %}"
+                onclick="setMatchMode('or')">OR</button>
+        <button type="button" id="btn-and"
+                class="text-xs font-mono px-2 py-0.5 rounded border transition-colors
+                       {% if match_mode == 'and' %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-500 border-slate-200 hover:border-slate-400{% endif %}"
+                onclick="setMatchMode('and')">AND</button>
+        <input type="hidden" id="match-input" value="{{ match_mode }}">
+      </div>
+
+      <div class="overflow-y-auto flex-1 space-y-5">
+        {% set sections = [
+          ('method', '手法',   '#1d4ed8', '#93c5fd'),
+          ('data',   'データ', '#047857', '#6ee7b7'),
+          ('theme',  'テーマ', '#c2410c', '#fed7aa')
+        ] %}
+        {% for ltype, ltype_name, color, border_color in sections %}
+        <div>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 pl-2"
+             style="border-left: 2px solid {{ color }}; padding-left: 8px;">
+            {{ ltype_name }}
+          </p>
+          <div class="space-y-0.5">
+            {% for label in labels_all if label.label_type == ltype %}
+            <label class="check-row {% if label.id in selected_label_ids %}is-checked{% endif %}"
+                   id="row-{{ label.id }}">
+              <input type="checkbox" name="label_ids" value="{{ label.id }}"
+                     {% if label.id in selected_label_ids %}checked{% endif %}
+                     class="sr-only label-filter-cb"
+                     data-ltype="{{ ltype }}"
+                     data-color="{{ color }}"
+                     data-border="{{ border_color }}">
+              <span class="cb-icon" id="cb-{{ label.id }}">
+                {% if label.id in selected_label_ids %}
+                <svg class="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4l3 3 5-6" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {% endif %}
+              </span>
+              <span class="text-sm text-slate-600">{{ label.name }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
         {% endfor %}
       </div>
-      {% endfor %}
     </div>
   </aside>
 
   <!-- 研究室リスト -->
-  <div class="flex-1" id="lab-list">
-    {% include "labs/partial_list.html" %}
+  <div class="flex-1">
+    <!-- グループ切り替え -->
+    <div class="flex items-center gap-1 mb-4">
+      <span class="text-xs text-slate-400 mr-1">グループ:</span>
+      {% for gval, glabel in [('method','手法別'),('data','データ別'),('theme','テーマ別'),('none','なし')] %}
+      <button type="button"
+              class="group-btn text-xs font-mono px-2 py-0.5 rounded border transition-colors
+                     {% if group_by == gval %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-500 border-slate-200 hover:border-slate-400{% endif %}"
+              data-gval="{{ gval }}"
+              onclick="setGroupBy('{{ gval }}')">{{ glabel }}</button>
+      {% endfor %}
+      <input type="hidden" id="group-input" value="{{ group_by }}">
+    </div>
+    <div id="lab-list">
+      {% include "labs/partial_list.html" %}
+    </div>
   </div>
 </div>
+
+<script>
+  function buildLabsUrl() {
+    const params = new URLSearchParams();
+    document.querySelectorAll('.label-filter-cb:checked').forEach(cb => {
+      params.append('label_ids', cb.value);
+    });
+    params.set('match', document.getElementById('match-input').value);
+    params.set('group_by', document.getElementById('group-input').value);
+    return '/labs/partial?' + params.toString();
+  }
+
+  function setGroupBy(gval) {
+    document.getElementById('group-input').value = gval;
+    document.querySelectorAll('.group-btn').forEach(btn => {
+      const active = btn.dataset.gval === gval;
+      btn.className = 'group-btn text-xs font-mono px-2 py-0.5 rounded border transition-colors ' +
+        (active ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400');
+    });
+    htmx.ajax('GET', buildLabsUrl(), { target: '#lab-list', swap: 'innerHTML' });
+  }
+
+  function setMatchMode(mode) {
+    document.getElementById('match-input').value = mode;
+    document.getElementById('btn-or').className =
+      'text-xs font-mono px-2 py-0.5 rounded border transition-colors ' +
+      (mode === 'or'
+        ? 'bg-teal-600 text-white border-teal-600'
+        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400');
+    document.getElementById('btn-and').className =
+      'text-xs font-mono px-2 py-0.5 rounded border transition-colors ' +
+      (mode === 'and'
+        ? 'bg-teal-600 text-white border-teal-600'
+        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400');
+    htmx.ajax('GET', buildLabsUrl(), { target: '#lab-list', swap: 'innerHTML' });
+  }
+
+  document.querySelectorAll('.label-filter-cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const row  = document.getElementById('row-' + cb.value);
+      const icon = document.getElementById('cb-' + cb.value);
+      if (!row || !icon) return;
+      if (cb.checked) {
+        row.classList.add('is-checked');
+        icon.style.borderColor = cb.dataset.color;
+        icon.style.background  = cb.dataset.color;
+        icon.innerHTML = '<svg class="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      } else {
+        row.classList.remove('is-checked');
+        icon.style.borderColor = '#cbd5e1';
+        icon.style.background  = '#fff';
+        icon.innerHTML = '';
+      }
+      // チェックボックス変更時も match モードを引き継いでリクエスト
+      htmx.ajax('GET', buildLabsUrl(), { target: '#lab-list', swap: 'innerHTML' });
+    });
+  });
+</script>
 {% endblock %}

@@ -21,16 +21,15 @@ async def search_view(
     results, expanded = [], []
     if q.strip():
         results, expanded = await search_labs(db, q.strip(), label_ids or None)
-        import asyncio
         from app.crud import create_search_log
-        async with db.begin():
-            await create_search_log(
-                db,
-                session_id=request.session.get("session_id", ""),
-                query_text=q,
-                expanded_keywords=expanded,
-                result_count=len(results),
-            )
+        await create_search_log(
+            db,
+            session_id=request.session.get("session_id", ""),
+            query_text=q,
+            expanded_keywords=expanded,
+            result_count=len(results),
+        )
+        await db.commit()
 
     return templates.TemplateResponse("search/results.html", {
         "request": request,

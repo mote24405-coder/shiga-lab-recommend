@@ -2,14 +2,14 @@
 from __future__ import annotations
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, func, delete
+from sqlalchemy import select, or_, func, delete, text, desc
 from sqlalchemy.orm import selectinload
 
 from app.models import (
     Lab, Teacher, Label, LabLabel, Thesis, ThesisLabel,
     LabEvidence, RecommendationRun, RecommendationResult,
     SurveyQuestion, SurveyResponse, SurveyAnswer,
-    Feedback, SearchLog, SearchSynonym,
+    Feedback, SearchLog, SearchSynonym, LabView,
 )
 
 
@@ -17,20 +17,40 @@ from app.models import (
 async def get_labs(
     db: AsyncSession,
     label_ids: list[int] | None = None,
+    match: str = "or",
     skip: int = 0,
     limit: int = 100,
 ) -> list[Lab]:
+    # 論文が1件以上紐づいている研究室のみ
+    has_thesis = select(Thesis.lab_id).where(Thesis.lab_id == Lab.id).exists()
+
     stmt = (
         select(Lab)
         .options(
             selectinload(Lab.teachers),
             selectinload(Lab.lab_labels).selectinload(LabLabel.label),
+            selectinload(Lab.theses),
         )
+        .where(has_thesis)
         .offset(skip).limit(limit)
         .order_by(Lab.name)
     )
     if label_ids:
-        stmt = stmt.join(LabLabel).where(LabLabel.label_id.in_(label_ids))
+        if match == "and":
+            # lab_labels に全ラベルが揃っている研究室のみ
+            subq = (
+                select(LabLabel.lab_id)
+                .where(LabLabel.label_id.in_(label_ids))
+                .group_by(LabLabel.lab_id)
+                .having(func.count(LabLabel.label_id) == len(label_ids))
+            )
+        else:
+            subq = (
+                select(LabLabel.lab_id)
+                .where(LabLabel.label_id.in_(label_ids))
+                .distinct()
+            )
+        stmt = stmt.where(Lab.id.in_(subq))
     result = await db.execute(stmt)
     return result.scalars().unique().all()
 
@@ -228,6 +248,80 @@ async def get_search_logs(db: AsyncSession, limit: int = 100) -> list[SearchLog]
     stmt = select(SearchLog).order_by(SearchLog.created_at.desc()).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+async def record_lab_view(
+    db: AsyncSession, session_id: str, lab_id: int, duration_sec: int
+) -> None:
+    db.add(LabView(session_id=session_id, lab_id=lab_id, duration_sec=max(0, duration_sec)))
+    await db.flush()
+
+
+async def get_popular_labs(db: AsyncSession, limit: int = 5) -> list[dict]:
+    stmt = (
+        select(
+            LabView.lab_id,
+            func.count().label("view_count"),
+            func.round(func.avg(LabView.duration_sec)).label("avg_duration"),
+        )
+        .group_by(LabView.lab_id)
+        .order_by(desc("view_count"))
+        .limit(limit)
+    )
+    rows = (await db.execute(stmt)).all()
+    if not rows:
+        return []
+    lab_ids = [r.lab_id for r in rows]
+    labs_map = {
+        lab.id: lab
+        for lab in (
+            await db.execute(
+                select(Lab)
+                .options(selectinload(Lab.teachers))
+                .where(Lab.id.in_(lab_ids))
+            )
+        ).scalars()
+    }
+    return [
+        {
+            "lab": labs_map[r.lab_id],
+            "view_count": r.view_count,
+            "avg_duration": int(r.avg_duration or 0),
+        }
+        for r in rows if r.lab_id in labs_map
+    ]
+
+
+async def get_popular_labels(db: AsyncSession, limit: int = 10) -> list[dict]:
+    """recommendation_runs の入力ラベルIDを集計して人気ラベルを返す。"""
+    stmt = text("""
+        SELECT label_id, COUNT(*) AS cnt
+        FROM (
+            SELECT unnest(input_method_label_ids) AS label_id FROM recommendation_runs
+            UNION ALL
+            SELECT unnest(input_data_label_ids)   AS label_id FROM recommendation_runs
+            UNION ALL
+            SELECT unnest(input_theme_label_ids)  AS label_id FROM recommendation_runs
+        ) sub
+        WHERE label_id IS NOT NULL
+        GROUP BY label_id
+        ORDER BY cnt DESC
+        LIMIT :limit
+    """)
+    rows = (await db.execute(stmt, {"limit": limit})).all()
+    if not rows:
+        return []
+    label_ids = [r.label_id for r in rows]
+    labels_map = {
+        label.id: label
+        for label in (
+            await db.execute(select(Label).where(Label.id.in_(label_ids)))
+        ).scalars()
+    }
+    return [
+        {"label": labels_map[r.label_id], "count": r.cnt}
+        for r in rows if r.label_id in labels_map
+    ]
 
 
 async def get_survey_responses(

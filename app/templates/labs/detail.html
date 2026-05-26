@@ -2,106 +2,141 @@
 {% block title %}{{ lab.name }}{% endblock %}
 {% block content %}
 
-<div class="mb-4">
-  <a href="/labs" class="text-sm text-blue-600 hover:underline">← 研究室一覧</a>
+<div class="mb-5">
+  <a href="/labs" class="text-xs text-slate-400 hover:text-teal-600 transition-colors">← 研究室一覧</a>
 </div>
 
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+<!-- 研究室ヘッダー -->
+<div class="border border-slate-200 rounded-md bg-white p-6 mb-4">
   <div class="flex items-start justify-between flex-wrap gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ lab.name }}</h1>
+      <h1 class="text-xl font-bold text-slate-800 tracking-tight mb-1">{{ lab.name }}</h1>
       {% if lab.teachers %}
-      <div class="text-gray-600 mb-3">
-        {% for t in lab.teachers %}
-        <span class="mr-3">👤 {{ t.name }}</span>
-        {% endfor %}
-      </div>
+      <p class="text-sm text-slate-500">
+        {% for t in lab.teachers %}{{ t.name }}{% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
       {% endif %}
     </div>
-    <div class="flex gap-2 text-sm">
+    <div class="flex gap-2 text-xs">
       {% if lab.official_url %}
       <a href="{{ lab.official_url }}" target="_blank" rel="noopener"
-         class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700">公式ページ</a>
+         class="btn-primary px-3 py-1.5 font-medium">公式ページ</a>
       {% endif %}
       {% if lab.lab_site_url %}
       <a href="{{ lab.lab_site_url }}" target="_blank" rel="noopener"
-         class="border border-gray-300 text-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-50">研究室サイト</a>
+         class="btn-outline px-3 py-1.5 font-medium">研究室サイト</a>
       {% endif %}
     </div>
   </div>
-
   {% if lab.description %}
-  <p class="text-gray-700 leading-relaxed">{{ lab.description }}</p>
+  <p class="text-sm text-slate-600 leading-relaxed mt-4">{{ lab.description }}</p>
   {% endif %}
 </div>
 
 <!-- ラベル -->
 {% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
-{% set data_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'data') | list %}
-{% set theme_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme') | list %}
+{% set data_labels   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | list %}
+{% set theme_labels  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | list %}
 
 {% if method_labels or data_labels or theme_labels %}
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-  <h2 class="font-semibold text-gray-700 mb-4">ラベル</h2>
+<div class="border border-slate-200 rounded-md bg-white p-5 mb-4">
+  <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">ラベル</h2>
   <div class="space-y-3">
     {% if method_labels %}
-    <div>
-      <span class="text-xs font-bold text-gray-500 mr-2">手法</span>
-      {% for ll in method_labels %}
-      <span class="inline-block bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
-        {{ ll.label.name }}
-        {% if ll.confidence %}<span class="text-blue-400">({{ ll.confidence }})</span>{% endif %}
-      </span>
-      {% endfor %}
+    <div class="flex items-start gap-3">
+      <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">手法</span>
+      <div class="flex flex-wrap gap-1">
+        {% for ll in method_labels %}
+        <span class="badge badge-method">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
     {% if data_labels %}
-    <div>
-      <span class="text-xs font-bold text-gray-500 mr-2">データ</span>
-      {% for ll in data_labels %}
-      <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
-        {{ ll.label.name }}
-        {% if ll.confidence %}<span class="text-green-400">({{ ll.confidence }})</span>{% endif %}
-      </span>
-      {% endfor %}
+    <div class="flex items-start gap-3">
+      <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">データ</span>
+      <div class="flex flex-wrap gap-1">
+        {% for ll in data_labels %}
+        <span class="badge badge-data">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
     {% if theme_labels %}
-    <div>
-      <span class="text-xs font-bold text-gray-500 mr-2">テーマ</span>
-      {% for ll in theme_labels %}
-      <span class="inline-block bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
-        {{ ll.label.name }}
-        {% if ll.confidence %}<span class="text-orange-400">({{ ll.confidence }})</span>{% endif %}
-      </span>
-      {% endfor %}
+    <div class="flex items-start gap-3">
+      <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">テーマ</span>
+      <div class="flex flex-wrap gap-1">
+        {% for ll in theme_labels %}
+        <span class="badge badge-theme">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
   </div>
 </div>
 {% endif %}
 
+<!-- 使用データの詳細（全論文からの集約） -->
+{% set ns = namespace(data_items=[], method_items=[]) %}
+{% for thesis in lab.theses %}
+  {% set raw = thesis.raw_labels or {} %}
+  {% for dr in raw.get('data_raw', []) %}
+    {% if dr and dr not in ns.data_items %}{% set ns.data_items = ns.data_items + [dr] %}{% endif %}
+  {% endfor %}
+  {% for mr in raw.get('method_raw', []) %}
+    {% if mr and mr not in ns.method_items %}{% set ns.method_items = ns.method_items + [mr] %}{% endif %}
+  {% endfor %}
+{% endfor %}
+
+{% if ns.data_items or ns.method_items %}
+<div class="border border-slate-200 rounded-md bg-white p-5 mb-4">
+  <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">実際に使われたデータ・手法</h2>
+  {% if ns.data_items %}
+  <div class="mb-3">
+    <p class="text-xs text-slate-400 mb-1.5">データ（具体）</p>
+    <ul class="space-y-1">
+      {% for item in ns.data_items %}
+      <li class="text-xs text-slate-600 flex items-start gap-1.5">
+        <span class="text-teal-400 mt-0.5 flex-shrink-0">·</span>{{ item }}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  {% if ns.method_items %}
+  <div>
+    <p class="text-xs text-slate-400 mb-1.5">手法（具体）</p>
+    <div class="flex flex-wrap gap-1">
+      {% for item in ns.method_items %}
+      <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">{{ item }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <!-- 根拠情報 -->
 {% if lab.evidences %}
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-  <h2 class="font-semibold text-gray-700 mb-4">ラベルの根拠情報</h2>
+<div class="border border-slate-200 rounded-md bg-white p-5 mb-4">
+  <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">ラベルの根拠</h2>
   <div class="space-y-3">
     {% for ev in lab.evidences %}
-    <div class="border-l-4 border-blue-200 pl-4 py-1">
-      {% if ev.label %}<span class="text-xs font-bold text-blue-600 mr-2">{{ ev.label.name }}</span>{% endif %}
+    <div class="border-l-2 border-teal-200 pl-3 py-0.5">
+      {% if ev.label %}<span class="text-xs font-semibold text-teal-700 mr-2">{{ ev.label.name }}</span>{% endif %}
       {% if ev.confidence %}
-      <span class="text-xs px-1.5 py-0.5 rounded
-        {% if ev.confidence == 'high' %}bg-green-100 text-green-700
-        {% elif ev.confidence == 'medium' %}bg-yellow-100 text-yellow-700
-        {% else %}bg-gray-100 text-gray-600{% endif %}">
+      <span class="text-xs px-1.5 py-0.5 rounded font-mono
+        {% if ev.confidence == 'high' %}bg-teal-50 text-teal-700
+        {% elif ev.confidence == 'medium' %}bg-amber-50 text-amber-700
+        {% else %}bg-slate-100 text-slate-500{% endif %}">
         {{ ev.confidence }}
       </span>
       {% endif %}
-      {% if ev.source_type %}<span class="text-xs text-gray-400 ml-1">[{{ ev.source_type }}]</span>{% endif %}
-      {% if ev.evidence_text %}<p class="text-sm text-gray-600 mt-1">{{ ev.evidence_text }}</p>{% endif %}
+      {% if ev.source_type %}<span class="text-xs text-slate-400 ml-1">[{{ ev.source_type }}]</span>{% endif %}
+      {% if ev.evidence_text %}<p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ ev.evidence_text }}</p>{% endif %}
       {% if ev.evidence_url %}
       <a href="{{ ev.evidence_url }}" target="_blank" rel="noopener"
-         class="text-xs text-blue-500 hover:underline">ソースを見る</a>
+         class="text-xs text-teal-600 hover:underline">ソースを見る →</a>
       {% endif %}
     </div>
     {% endfor %}
@@ -111,19 +146,43 @@
 
 <!-- 関連論文 -->
 {% if lab.theses %}
-<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-  <h2 class="font-semibold text-gray-700 mb-4">関連する修士論文</h2>
-  <div class="space-y-3">
+<div class="border border-slate-200 rounded-md bg-white overflow-hidden mb-6">
+  <div class="px-5 py-3 border-b border-slate-100">
+    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">関連する修士論文</h2>
+  </div>
+  <div class="divide-y divide-slate-100">
     {% for thesis in lab.theses | sort(attribute='year', reverse=True) %}
-    <div class="border border-gray-100 rounded-lg p-3">
-      <div class="text-sm font-medium text-gray-800 mb-1">{{ thesis.title }}</div>
-      <div class="text-xs text-gray-500">
+    {% set raw = thesis.raw_labels or {} %}
+    {% set data_raw = raw.get('data_raw', []) %}
+    {% set method_raw = raw.get('method_raw', []) %}
+    <div class="px-5 py-4">
+      <p class="text-sm text-slate-700 font-medium leading-snug mb-1">{{ thesis.title }}</p>
+      <p class="text-xs text-slate-400 mb-2">
         {% if thesis.year %}{{ thesis.year }}年{% endif %}
-        {% if thesis.author_name %}・{{ thesis.author_name }}{% endif %}
+        {% if thesis.author_name %} · {{ thesis.author_name }}{% endif %}
+      </p>
+
+      {% if data_raw %}
+      <div class="mb-1.5">
+        <span class="text-xs text-slate-400 mr-1.5">使用データ</span>
+        <span class="text-xs text-slate-600">{{ data_raw | join(' / ') }}</span>
       </div>
+      {% endif %}
+
+      {% if method_raw %}
+      <div class="mb-1.5">
+        <span class="text-xs text-slate-400 mr-1.5">手法</span>
+        <span class="text-xs text-slate-600">{{ method_raw | join(', ') }}</span>
+      </div>
+      {% endif %}
+
+      {% if thesis.summary_ja %}
+      <p class="text-xs text-slate-500 leading-relaxed mt-1.5 mb-2">{{ thesis.summary_ja }}</p>
+      {% endif %}
+
       {% if thesis.repo_url %}
       <a href="{{ thesis.repo_url }}" target="_blank" rel="noopener"
-         class="text-xs text-blue-500 hover:underline">リポジトリで見る</a>
+         class="text-xs text-teal-600 hover:underline">リポジトリで見る →</a>
       {% endif %}
     </div>
     {% endfor %}
@@ -131,9 +190,24 @@
 </div>
 {% endif %}
 
-<div class="text-center mt-8">
-  <a href="/recommend" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm">
-    この研究室を含む推薦を受ける
+<div class="text-center mt-6">
+  <a href="/recommend" class="btn-primary inline-block px-5 py-2 text-sm font-medium">
+    推薦を受ける →
   </a>
 </div>
+
+<script>
+  (function () {
+    const start = Date.now();
+    let sent = false;
+    function send() {
+      if (sent) return;
+      sent = true;
+      const body = new URLSearchParams({ duration_sec: Math.round((Date.now() - start) / 1000) });
+      navigator.sendBeacon('/labs/{{ lab.id }}/view', body);
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') send(); });
+    window.addEventListener('pagehide', send);
+  })();
+</script>
 {% endblock %}

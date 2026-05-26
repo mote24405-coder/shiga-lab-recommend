@@ -6,7 +6,7 @@ from sqlalchemy import select, func
 
 from app.database import get_db
 from app import crud
-from app.models import Lab, Teacher, Thesis, Label, Feedback, SearchLog, SurveyResponse
+from app.models import Lab, Teacher, Thesis, Label, Feedback, SearchLog, SurveyResponse, LabView
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
@@ -18,10 +18,20 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templa
 async def admin_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     counts = {}
     for model, key in [(Lab, "labs"), (Teacher, "teachers"), (Thesis, "theses"),
-                       (Label, "labels"), (Feedback, "feedbacks"), (SearchLog, "search_logs")]:
+                       (Label, "labels"), (Feedback, "feedbacks"), (SearchLog, "search_logs"),
+                       (LabView, "lab_views")]:
         r = await db.execute(select(func.count()).select_from(model))
         counts[key] = r.scalar()
-    return templates.TemplateResponse("admin/dashboard.html", {"request": request, "counts": counts})
+
+    popular_labs    = await crud.get_popular_labs(db, limit=5)
+    popular_labels  = await crud.get_popular_labels(db, limit=10)
+
+    return templates.TemplateResponse("admin/dashboard.html", {
+        "request": request,
+        "counts": counts,
+        "popular_labs": popular_labs,
+        "popular_labels": popular_labels,
+    })
 
 
 @router.get("/labs")

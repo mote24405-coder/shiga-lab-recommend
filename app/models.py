@@ -93,6 +93,9 @@ class Thesis(Base):
     repo_url: Mapped[Optional[str]] = mapped_column(String(500))
     pdf_url: Mapped[Optional[str]] = mapped_column(String(500))
     abstract: Mapped[Optional[str]] = mapped_column(Text)
+    raw_labels: Mapped[Optional[dict]] = mapped_column(JSONB)   # OpenAI抽出の細粒度ラベル
+    summary_ja: Mapped[Optional[str]] = mapped_column(Text)     # 日本語要約
+    repo_item_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)  # リポジトリ固有ID
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -238,6 +241,17 @@ class SearchLog(Base):
     expanded_keywords: Mapped[Optional[list]] = mapped_column(JSONB)
     result_count: Mapped[Optional[int]] = mapped_column(Integer)
     clicked_lab_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("labs.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
+# ── 研究室閲覧ログ ─────────────────────────────────────
+class LabView(Base):
+    __tablename__ = "lab_views"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[Optional[str]] = mapped_column(String(100), index=True)
+    lab_id: Mapped[int] = mapped_column(Integer, ForeignKey("labs.id"), index=True)
+    duration_sec: Mapped[Optional[int]] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 

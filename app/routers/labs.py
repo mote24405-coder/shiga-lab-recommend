@@ -1,5 +1,6 @@
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, Query
+from fastapi import APIRouter, Request, Depends, Query, Form
+from fastapi.responses import Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,14 +16,18 @@ async def labs_index(
     request: Request,
     db: AsyncSession = Depends(get_db),
     label_ids: list[int] = Query(default=[]),
+    match: str = Query(default="or"),
+    group_by: str = Query(default="method"),
 ):
     labels_all = await crud.get_labels(db)
-    labs = await crud.get_labs(db, label_ids=label_ids or None)
+    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match)
     return templates.TemplateResponse("labs/index.html", {
         "request": request,
         "labs": labs,
         "labels_all": labels_all,
         "selected_label_ids": label_ids,
+        "match_mode": match,
+        "group_by": group_by,
     })
 
 
@@ -31,12 +36,15 @@ async def labs_partial(
     request: Request,
     db: AsyncSession = Depends(get_db),
     label_ids: list[int] = Query(default=[]),
+    match: str = Query(default="or"),
+    group_by: str = Query(default="method"),
 ):
     """HTMX用：ラベル絞り込み後の研究室リスト断片を返す。"""
-    labs = await crud.get_labs(db, label_ids=label_ids or None)
+    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match)
     return templates.TemplateResponse("labs/partial_list.html", {
         "request": request,
         "labs": labs,
+        "group_by": group_by,
     })
 
 
@@ -52,6 +60,20 @@ async def labs_compare(
         "request": request,
         "labs": labs,
     })
+
+
+@router.post("/{lab_id}/view", status_code=204)
+async def record_lab_view(
+    lab_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    duration_sec: int = Form(default=0),
+):
+    """Beacon API から呼ばれる滞在時間記録エンドポイント。"""
+    session_id = request.session.get("session_id", "")
+    await crud.record_lab_view(db, session_id=session_id, lab_id=lab_id, duration_sec=duration_sec)
+    await db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/{lab_id}")

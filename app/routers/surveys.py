@@ -47,8 +47,8 @@ async def survey_submit(request: Request, db: AsyncSession = Depends(get_db)):
         else:
             answers.append({"question_id": q.id, "answer_text": val})
 
-    async with db.begin():
-        await crud.create_survey_response(db, session_id, survey_type, run_id, answers)
+    await crud.create_survey_response(db, session_id, survey_type, run_id, answers)
+    await db.commit()
 
     return RedirectResponse("/surveys/thanks", status_code=303)
 
