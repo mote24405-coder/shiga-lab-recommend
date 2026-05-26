@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}検索結果{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold text-blue-800 mb-6">キーワード検索</h1>
+
+<form action="/search" method="get" class="flex gap-2 mb-6">
+  <input type="text" name="q" value="{{ query }}"
+         placeholder="例：機械学習、医療、NLP"
+         class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+  <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">検索</button>
+</form>
+
+{% if query %}
+  {% if expanded and expanded | length > 1 %}
+  <p class="text-xs text-gray-400 mb-4">
+    同義語展開：
+    {% for kw in expanded %}<span class="bg-gray-100 px-1.5 py-0.5 rounded mr-1">{{ kw }}</span>{% endfor %}
+  </p>
+  {% endif %}
+
+  {% if results %}
+  <p class="text-sm text-gray-500 mb-4">{{ results | length }} 件ヒット</p>
+  <div class="space-y-3">
+    {% for r in results %}
+    <a href="/labs/{{ r.lab_id }}"
+       class="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition hover:border-blue-300">
+      <div class="font-semibold text-gray-800 mb-1">{{ r.lab_name }}</div>
+      <div class="text-sm text-gray-500 mb-1">{{ r.teacher_name }}</div>
+      <div class="text-xs text-blue-500">{{ r.match_reason }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-gray-400 text-sm py-8 text-center">
+    「{{ query }}」に一致する研究室が見つかりませんでした。
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

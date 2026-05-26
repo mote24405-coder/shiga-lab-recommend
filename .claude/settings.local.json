@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print $2}')",
+      "Bash(xargs '-I{}' python3 -c ' *)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(.venv/Scripts/alembic init *)",
+      "Bash(py -0)",
+      "Read(//c/Users/teru0/AppData/Local/Programs/**)",
+      "Read(//c/Users/teru0/Miniconda3/envs//**)",
+      "Bash(/c/Users/teru0/Miniconda3/python.exe --version)",
+      "Read(//c/Users/teru0/AppData/Local/uv/**)",
+      "Bash(/c/Users/teru0/Miniconda3/envs/py_claude/python.exe --version)",
+      "Bash(/c/Users/teru0/Miniconda3/envs/stock-backtest/python.exe --version)",
+      "Bash(/c/Users/teru0/Miniconda3/envs/py_claude/python.exe -m venv .venv)",
+      "Bash(.venv/Scripts/python.exe --version)",
+      "Bash(echo \"Created venv with Python $\\(.venv/Scripts/python.exe --version\\)\")",
+      "Bash(uv python *)",
+      "Bash(docker compose *)",
+      "Bash(git config *)",
+      "Bash(git add *)"
+    ]
+  }
+}

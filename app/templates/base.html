@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}滋賀大学DS研究科 研究室探索{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+  <nav class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6 flex-wrap">
+      <a href="/" class="font-bold text-blue-700 text-lg whitespace-nowrap">DS研究室ナビ</a>
+      <a href="/labs" class="text-sm text-gray-600 hover:text-blue-600">研究室一覧</a>
+      <a href="/recommend" class="text-sm text-gray-600 hover:text-blue-600">推薦を受ける</a>
+      <a href="/search" class="text-sm text-gray-600 hover:text-blue-600">検索</a>
+      <a href="/surveys" class="text-sm text-gray-600 hover:text-blue-600">アンケート</a>
+      <a href="/admin" class="ml-auto text-xs text-gray-400 hover:text-gray-600">管理</a>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="mt-16 border-t border-gray-200 bg-white text-center text-xs text-gray-400 py-6">
+    滋賀大学データサイエンス研究科 研究室探索システム（参考情報）
+  </footer>
+</body>
+</html>

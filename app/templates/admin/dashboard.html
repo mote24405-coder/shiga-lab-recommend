@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}管理ダッシュボード{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold text-gray-800 mb-6">管理ダッシュボード</h1>
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+  {% for key, label in [('labs','研究室'),('teachers','教員'),('theses','論文'),('labels','ラベル'),('feedbacks','FB'),('search_logs','検索ログ')] %}
+  <div class="bg-white border border-gray-200 rounded-xl p-5 text-center">
+    <div class="text-3xl font-bold text-blue-700">{{ counts.get(key, 0) }}</div>
+    <div class="text-sm text-gray-500 mt-1">{{ label }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+  {% for path, label in [('/admin/labs','研究室'),('/admin/labels','ラベル'),('/admin/theses','論文'),('/admin/surveys','アンケート'),('/admin/feedbacks','フィードバック'),('/admin/search_logs','検索ログ')] %}
+  <a href="{{ path }}" class="block bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition text-center text-sm font-medium text-gray-700 hover:text-blue-600">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

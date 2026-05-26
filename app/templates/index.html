@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}滋賀大学DS研究科 研究室探索{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto text-center py-12">
+  <h1 class="text-3xl font-bold text-blue-800 mb-4">研究室探索ナビ</h1>
+  <p class="text-gray-600 mb-8 leading-relaxed">
+    滋賀大学データサイエンス研究科の各研究室について、<br>
+    手法・データ・テーマのラベルをもとに検索・推薦します。
+  </p>
+
+  <!-- 検索バー -->
+  <form action="/search" method="get" class="flex gap-2 mb-10">
+    <input type="text" name="q" placeholder="キーワード検索（例：機械学習、医療、NLP）"
+           class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <button type="submit"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700">検索</button>
+  </form>
+
+  <!-- ナビカード -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+    <a href="/labs" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+      <div class="text-2xl mb-2">🔬</div>
+      <div class="font-semibold text-gray-800 mb-1">研究室一覧</div>
+      <div class="text-sm text-gray-500">ラベルで絞り込みながら全研究室を見る</div>
+    </a>
+    <a href="/recommend" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+      <div class="text-2xl mb-2">✨</div>
+      <div class="font-semibold text-gray-800 mb-1">推薦を受ける</div>
+      <div class="text-sm text-gray-500">興味のある手法・データ・テーマを選んで推薦</div>
+    </a>
+    <a href="/surveys" class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+      <div class="text-2xl mb-2">📝</div>
+      <div class="font-semibold text-gray-800 mb-1">アンケート</div>
+      <div class="text-sm text-gray-500">このアプリへのフィードバックをお聞かせください</div>
+    </a>
+  </div>
+
+  <p class="mt-10 text-xs text-gray-400">
+    ※ この情報は公開情報をもとにした参考情報です。実際の受け入れ状況や研究内容は必ず各教員にご確認ください。
+  </p>
+</div>
+{% endblock %}

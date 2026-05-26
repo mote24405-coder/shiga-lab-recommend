@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}フィードバック{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">フィードバック <span class="text-base font-normal text-gray-400">{{ feedbacks | length }} 件</span></h1>
+  <a href="/admin" class="text-sm text-gray-500 hover:underline">← ダッシュボード</a>
+</div>
+<div class="space-y-3">
+  {% for fb in feedbacks %}
+  <div class="bg-white border border-gray-200 rounded-xl p-4 text-sm">
+    <div class="flex items-center gap-3 mb-1">
+      <span class="text-gray-400 text-xs">{{ fb.created_at.strftime('%Y-%m-%d %H:%M') if fb.created_at else '' }}</span>
+      <span class="text-gray-500">{{ fb.feedback_type }}</span>
+      {% if fb.rating %}
+      <span class="text-yellow-500">{{ '★' * fb.rating }}{{ '☆' * (5 - fb.rating) }}</span>
+      {% endif %}
+    </div>
+    {% if fb.comment %}
+    <p class="text-gray-700">{{ fb.comment }}</p>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="text-gray-400 text-center py-12">まだフィードバックはありません。</div>
+  {% endfor %}
+</div>
+{% endblock %}

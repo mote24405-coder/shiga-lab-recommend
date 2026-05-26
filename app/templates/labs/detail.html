@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ lab.name }}{% endblock %}
+{% block content %}
+
+<div class="mb-4">
+  <a href="/labs" class="text-sm text-blue-600 hover:underline">← 研究室一覧</a>
+</div>
+
+<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <div class="flex items-start justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ lab.name }}</h1>
+      {% if lab.teachers %}
+      <div class="text-gray-600 mb-3">
+        {% for t in lab.teachers %}
+        <span class="mr-3">👤 {{ t.name }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="flex gap-2 text-sm">
+      {% if lab.official_url %}
+      <a href="{{ lab.official_url }}" target="_blank" rel="noopener"
+         class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700">公式ページ</a>
+      {% endif %}
+      {% if lab.lab_site_url %}
+      <a href="{{ lab.lab_site_url }}" target="_blank" rel="noopener"
+         class="border border-gray-300 text-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-50">研究室サイト</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if lab.description %}
+  <p class="text-gray-700 leading-relaxed">{{ lab.description }}</p>
+  {% endif %}
+</div>
+
+<!-- ラベル -->
+{% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
+{% set data_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'data') | list %}
+{% set theme_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme') | list %}
+
+{% if method_labels or data_labels or theme_labels %}
+<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-gray-700 mb-4">ラベル</h2>
+  <div class="space-y-3">
+    {% if method_labels %}
+    <div>
+      <span class="text-xs font-bold text-gray-500 mr-2">手法</span>
+      {% for ll in method_labels %}
+      <span class="inline-block bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
+        {{ ll.label.name }}
+        {% if ll.confidence %}<span class="text-blue-400">({{ ll.confidence }})</span>{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if data_labels %}
+    <div>
+      <span class="text-xs font-bold text-gray-500 mr-2">データ</span>
+      {% for ll in data_labels %}
+      <span class="inline-block bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
+        {{ ll.label.name }}
+        {% if ll.confidence %}<span class="text-green-400">({{ ll.confidence }})</span>{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if theme_labels %}
+    <div>
+      <span class="text-xs font-bold text-gray-500 mr-2">テーマ</span>
+      {% for ll in theme_labels %}
+      <span class="inline-block bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full text-xs mr-1 mb-1">
+        {{ ll.label.name }}
+        {% if ll.confidence %}<span class="text-orange-400">({{ ll.confidence }})</span>{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- 根拠情報 -->
+{% if lab.evidences %}
+<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-gray-700 mb-4">ラベルの根拠情報</h2>
+  <div class="space-y-3">
+    {% for ev in lab.evidences %}
+    <div class="border-l-4 border-blue-200 pl-4 py-1">
+      {% if ev.label %}<span class="text-xs font-bold text-blue-600 mr-2">{{ ev.label.name }}</span>{% endif %}
+      {% if ev.confidence %}
+      <span class="text-xs px-1.5 py-0.5 rounded
+        {% if ev.confidence == 'high' %}bg-green-100 text-green-700
+        {% elif ev.confidence == 'medium' %}bg-yellow-100 text-yellow-700
+        {% else %}bg-gray-100 text-gray-600{% endif %}">
+        {{ ev.confidence }}
+      </span>
+      {% endif %}
+      {% if ev.source_type %}<span class="text-xs text-gray-400 ml-1">[{{ ev.source_type }}]</span>{% endif %}
+      {% if ev.evidence_text %}<p class="text-sm text-gray-600 mt-1">{{ ev.evidence_text }}</p>{% endif %}
+      {% if ev.evidence_url %}
+      <a href="{{ ev.evidence_url }}" target="_blank" rel="noopener"
+         class="text-xs text-blue-500 hover:underline">ソースを見る</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- 関連論文 -->
+{% if lab.theses %}
+<div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-gray-700 mb-4">関連する修士論文</h2>
+  <div class="space-y-3">
+    {% for thesis in lab.theses | sort(attribute='year', reverse=True) %}
+    <div class="border border-gray-100 rounded-lg p-3">
+      <div class="text-sm font-medium text-gray-800 mb-1">{{ thesis.title }}</div>
+      <div class="text-xs text-gray-500">
+        {% if thesis.year %}{{ thesis.year }}年{% endif %}
+        {% if thesis.author_name %}・{{ thesis.author_name }}{% endif %}
+      </div>
+      {% if thesis.repo_url %}
+      <a href="{{ thesis.repo_url }}" target="_blank" rel="noopener"
+         class="text-xs text-blue-500 hover:underline">リポジトリで見る</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="text-center mt-8">
+  <a href="/recommend" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 text-sm">
+    この研究室を含む推薦を受ける
+  </a>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}研究室一覧{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold text-blue-800 mb-6">研究室一覧</h1>
+
+<div class="flex flex-col lg:flex-row gap-6">
+  <!-- ラベル絞り込みパネル -->
+  <aside class="lg:w-56 flex-shrink-0">
+    <div class="bg-white border border-gray-200 rounded-xl p-4 sticky top-4">
+      <h2 class="font-semibold text-gray-700 mb-3 text-sm">ラベルで絞り込み</h2>
+
+      {% set type_names = {"method": "手法", "data": "データ", "theme": "テーマ"} %}
+      {% for ltype, ltype_name in type_names.items() %}
+      <div class="mb-4">
+        <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{{ ltype_name }}</div>
+        {% for label in labels_all if label.label_type == ltype %}
+        <label class="flex items-center gap-2 text-sm py-0.5 cursor-pointer hover:text-blue-600">
+          <input type="checkbox" name="label_ids" value="{{ label.id }}"
+                 {% if label.id in selected_label_ids %}checked{% endif %}
+                 class="label-filter-cb"
+                 hx-get="/labs/partial"
+                 hx-include=".label-filter-cb"
+                 hx-target="#lab-list"
+                 hx-trigger="change">
+          {{ label.name }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- 研究室リスト -->
+  <div class="flex-1" id="lab-list">
+    {% include "labs/partial_list.html" %}
+  </div>
+</div>
+{% endblock %}

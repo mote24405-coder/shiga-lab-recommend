@@ -1,0 +1,33 @@
+{% if labs %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% for lab in labs %}
+  <a href="/labs/{{ lab.id }}"
+     class="block bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition hover:border-blue-300">
+    <div class="font-semibold text-gray-800 text-lg mb-1">{{ lab.name }}</div>
+    {% if lab.teachers %}
+    <div class="text-sm text-gray-500 mb-3">
+      {{ lab.teachers | map(attribute='name') | join('・') }}
+    </div>
+    {% endif %}
+
+    {% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
+    {% set data_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'data') | list %}
+    {% set theme_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme') | list %}
+
+    <div class="flex flex-wrap gap-1 text-xs">
+      {% for ll in method_labels %}
+      <span class="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">{{ ll.label.name }}</span>
+      {% endfor %}
+      {% for ll in data_labels %}
+      <span class="bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">{{ ll.label.name }}</span>
+      {% endfor %}
+      {% for ll in theme_labels %}
+      <span class="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full">{{ ll.label.name }}</span>
+      {% endfor %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-gray-400 text-sm py-8 text-center">該当する研究室がありません。</div>
+{% endif %}
