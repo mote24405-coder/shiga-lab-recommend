@@ -11,6 +11,7 @@ build/
 data/raw/*.json
 data/processed/*.json
 data/raw/*.pdf
+data/raw/pdfs/
 *.db
 node_modules/
 .coverage

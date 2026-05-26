@@ -6,26 +6,58 @@
   <title>{% block title %}滋賀大学DS研究科 研究室探索{% endblock %}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
+<body>
 
-  <nav class="bg-white border-b border-gray-200 shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-6 flex-wrap">
-      <a href="/" class="font-bold text-blue-700 text-lg whitespace-nowrap">DS研究室ナビ</a>
-      <a href="/labs" class="text-sm text-gray-600 hover:text-blue-600">研究室一覧</a>
-      <a href="/recommend" class="text-sm text-gray-600 hover:text-blue-600">推薦を受ける</a>
-      <a href="/search" class="text-sm text-gray-600 hover:text-blue-600">検索</a>
-      <a href="/surveys" class="text-sm text-gray-600 hover:text-blue-600">アンケート</a>
-      <a href="/admin" class="ml-auto text-xs text-gray-400 hover:text-gray-600">管理</a>
+  <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 h-12 flex items-center justify-between">
+      <a href="/" class="nav-logo text-sm font-semibold text-teal-700 tracking-tight">
+        lab-nav
+      </a>
+
+      <!-- Desktop -->
+      <div class="hidden sm:flex items-center gap-1 h-full">
+        {% set nav_items = [('/labs', '研究室一覧'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
+        {% for path, label in nav_items %}
+        {% set active = (path == '/' and request.url.path == '/') or (path != '/' and request.url.path.startswith(path)) %}
+        <a href="{{ path }}"
+           class="px-3 h-full flex items-center text-sm border-b-2 transition-colors
+                  {% if active %}border-teal-600 text-teal-700 font-medium{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300{% endif %}">
+          {{ label }}
+        </a>
+        {% endfor %}
+        <a href="/admin" class="ml-4 px-2 text-xs text-slate-400 hover:text-slate-600 transition-colors">管理</a>
+      </div>
+
+      <!-- Mobile hamburger -->
+      <button class="sm:hidden text-slate-500 p-1"
+              onclick="document.getElementById('mobile-nav').classList.toggle('hidden')">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="mobile-nav" class="hidden sm:hidden border-t border-slate-100 bg-white px-6 pb-3">
+      {% for path, label in [('/labs', '研究室一覧'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
+      {% set active = (path == '/' and request.url.path == '/') or (path != '/' and request.url.path.startswith(path)) %}
+      <a href="{{ path }}"
+         class="block py-2.5 text-sm border-b border-slate-50 last:border-0
+                {% if active %}text-teal-700 font-medium{% else %}text-slate-600{% endif %}">
+        {{ label }}
+      </a>
+      {% endfor %}
     </div>
   </nav>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
+  <main class="max-w-6xl mx-auto px-6 py-8">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="mt-16 border-t border-gray-200 bg-white text-center text-xs text-gray-400 py-6">
+  <footer class="mt-20 border-t border-slate-200 px-6 py-6 text-center text-xs text-slate-400">
     滋賀大学データサイエンス研究科 研究室探索システム（参考情報）
   </footer>
+
 </body>
 </html>

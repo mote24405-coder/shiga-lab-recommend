@@ -37,15 +37,17 @@ async def compute_recommendations(
     data_label_ids: list[int],
     theme_label_ids: list[int],
 ) -> list[RecommendationScore]:
-    from app.models import Lab, LabLabel, Label, Teacher
+    from app.models import Lab, LabLabel, Label, Teacher, Thesis
 
-    # 全研究室 + ラベル + 教員を一括取得
+    # 論文が1件以上ある研究室のみ対象
+    has_thesis = select(Thesis.lab_id).where(Thesis.lab_id == Lab.id).exists()
     stmt = (
         select(Lab)
         .options(
             selectinload(Lab.lab_labels).selectinload(LabLabel.label),
             selectinload(Lab.teachers),
         )
+        .where(has_thesis)
     )
     result = await db.execute(stmt)
     labs = result.scalars().all()

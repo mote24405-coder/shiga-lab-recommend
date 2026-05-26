@@ -59,12 +59,12 @@ async def recommend_run(
 
     scores = await compute_recommendations(db, method_ids, data_ids, theme_ids)
 
-    async with db.begin():
-        run = await crud.create_recommendation_run(
-            db, session_id, method_ids, data_ids, theme_ids,
-            free_text or None,
-        )
-        await crud.create_recommendation_results(db, run.id, scores[:10])
+    run = await crud.create_recommendation_run(
+        db, session_id, method_ids, data_ids, theme_ids,
+        free_text or None,
+    )
+    await crud.create_recommendation_results(db, run.id, scores[:10])
+    await db.commit()
 
     return RedirectResponse(f"/recommend/{run.id}", status_code=303)
 
@@ -96,11 +96,11 @@ async def recommend_feedback(
     comment: str = Form(default=""),
 ):
     session_id = request.session.get("session_id", str(uuid.uuid4()))
-    async with db.begin():
-        await crud.create_feedback(
-            db, session_id, run_id, result_id,
-            feedback_type, rating, comment or None,
-        )
+    await crud.create_feedback(
+        db, session_id, run_id, result_id,
+        feedback_type, rating, comment or None,
+    )
+    await db.commit()
     # HTMXリクエストには小さなHTMLを返す
     if request.headers.get("HX-Request"):
         return templates.TemplateResponse("recommend/feedback_thanks.html", {"request": request})
