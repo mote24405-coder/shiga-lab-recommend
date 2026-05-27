@@ -9,11 +9,14 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # SYNC_DATABASE_URL を優先（非同期URLは使えない）
-db_url = os.getenv("SYNC_DATABASE_URL") or os.getenv("DATABASE_URL", "").replace(
-    "postgresql+asyncpg://", "postgresql://"
+_raw = os.getenv("SYNC_DATABASE_URL") or os.getenv("DATABASE_URL", "")
+db_url = (
+    _raw.replace("postgresql+asyncpg://", "postgresql://")
+        .replace("postgres://", "postgresql://")
 )
-if db_url:
-    config.set_main_option("sqlalchemy.url", db_url)
+if not db_url:
+    raise RuntimeError("DATABASE_URL or SYNC_DATABASE_URL environment variable is not set")
+config.set_main_option("sqlalchemy.url", db_url)
 
 from app.models import Base  # noqa: E402
 target_metadata = Base.metadata
