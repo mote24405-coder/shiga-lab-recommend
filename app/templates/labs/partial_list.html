@@ -13,9 +13,9 @@
 ] %}
 
 {% macro lab_card(lab, accent_color='') %}
-{% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
-{% set data_labels   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | list %}
-{% set theme_labels  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | list %}
+{% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | selectattr('confidence', 'eq', 'high') | list %}
+{% set data_labels   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | selectattr('confidence', 'eq', 'high') | list %}
+{% set theme_labels  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | selectattr('confidence', 'eq', 'high') | list %}
 {% if accent_color %}
   {# グループ別カラーをインラインで適用 #}
   {% set card_extra = 'style="border-left: 3px solid ' + accent_color + ';"' %}
@@ -60,7 +60,7 @@
 {# 代表ラベル（同タイプの先頭）を収集 #}
 {% set ns_keys = namespace(ids=[], names=[]) %}
 {% for lab in labs %}
-  {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list %}
+  {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | selectattr('confidence', 'eq', 'high') | list %}
   {% if primary and primary[0].label.id not in ns_keys.ids %}
     {% set ns_keys.ids   = ns_keys.ids   + [primary[0].label.id] %}
     {% set ns_keys.names = ns_keys.names + [primary[0].label.name] %}
@@ -75,7 +75,7 @@
 
   {% set ns_grp = namespace(grp=[]) %}
   {% for lab in labs %}
-    {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list %}
+    {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | selectattr('confidence', 'eq', 'high') | list %}
     {% if primary and primary[0].label.id == cur_id %}
       {% set ns_grp.grp = ns_grp.grp + [lab] %}
     {% endif %}
@@ -99,7 +99,7 @@
 {# 該当タイプのラベルがない研究室 → その他 #}
 {% set ns_other = namespace(other=[]) %}
 {% for lab in labs %}
-  {% if not (lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list) %}
+  {% if not (lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | selectattr('confidence', 'eq', 'high') | list) %}
     {% set ns_other.other = ns_other.other + [lab] %}
   {% endif %}
 {% endfor %}
