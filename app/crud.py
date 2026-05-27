@@ -37,10 +37,11 @@ async def get_labs(
         stmt = stmt.where(has_thesis)
     if label_ids:
         if match == "and":
-            # lab_labels に全ラベルが揃っている研究室のみ
+            # highラベルに全ラベルが揃っている研究室のみ
             subq = (
                 select(LabLabel.lab_id)
                 .where(LabLabel.label_id.in_(label_ids))
+                .where(LabLabel.confidence == "high")
                 .group_by(LabLabel.lab_id)
                 .having(func.count(LabLabel.label_id) == len(label_ids))
             )
@@ -48,6 +49,7 @@ async def get_labs(
             subq = (
                 select(LabLabel.lab_id)
                 .where(LabLabel.label_id.in_(label_ids))
+                .where(LabLabel.confidence == "high")
                 .distinct()
             )
         stmt = stmt.where(Lab.id.in_(subq))

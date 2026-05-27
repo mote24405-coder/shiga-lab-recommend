@@ -34,45 +34,79 @@
 </div>
 
 <!-- ラベル -->
-{% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
-{% set data_labels   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | list %}
-{% set theme_labels  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | list %}
+{% set method_high = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | selectattr('confidence', 'eq', 'high') | list %}
+{% set data_high   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | selectattr('confidence', 'eq', 'high') | list %}
+{% set theme_high  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | selectattr('confidence', 'eq', 'high') | list %}
+{% set method_med  = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | selectattr('confidence', 'eq', 'medium') | list %}
+{% set data_med    = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | selectattr('confidence', 'eq', 'medium') | list %}
+{% set theme_med   = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | selectattr('confidence', 'eq', 'medium') | list %}
 
-{% if method_labels or data_labels or theme_labels %}
+{% if method_high or data_high or theme_high or method_med or data_med or theme_med %}
 <div class="border border-slate-200 rounded-md bg-white p-5 mb-4">
   <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">ラベル</h2>
-  <div class="space-y-3">
-    {% if method_labels %}
+
+  {# ── high: コア研究テーマ ── #}
+  {% if method_high or data_high or theme_high %}
+  <div class="space-y-3 mb-4">
+    {% if method_high %}
     <div class="flex items-start gap-3">
       <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">手法</span>
       <div class="flex flex-wrap gap-1">
-        {% for ll in method_labels %}
-        <span class="badge badge-method">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
-        {% endfor %}
+        {% for ll in method_high %}<span class="badge badge-method">{{ ll.label.name }}</span>{% endfor %}
       </div>
     </div>
     {% endif %}
-    {% if data_labels %}
+    {% if data_high %}
     <div class="flex items-start gap-3">
       <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">データ</span>
       <div class="flex flex-wrap gap-1">
-        {% for ll in data_labels %}
-        <span class="badge badge-data">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
-        {% endfor %}
+        {% for ll in data_high %}<span class="badge badge-data">{{ ll.label.name }}</span>{% endfor %}
       </div>
     </div>
     {% endif %}
-    {% if theme_labels %}
+    {% if theme_high %}
     <div class="flex items-start gap-3">
       <span class="text-xs text-slate-400 w-10 pt-0.5 flex-shrink-0">テーマ</span>
       <div class="flex flex-wrap gap-1">
-        {% for ll in theme_labels %}
-        <span class="badge badge-theme">{{ ll.label.name }}{% if ll.confidence %} <span class="opacity-60">{{ ll.confidence }}</span>{% endif %}</span>
-        {% endfor %}
+        {% for ll in theme_high %}<span class="badge badge-theme">{{ ll.label.name }}</span>{% endfor %}
       </div>
     </div>
     {% endif %}
   </div>
+  {% endif %}
+
+  {# ── medium: 関連テーマ（参考） ── #}
+  {% if method_med or data_med or theme_med %}
+  <div class="border-t border-slate-100 pt-3">
+    <p class="text-xs text-slate-400 mb-2">関連テーマ（参考）</p>
+    <div class="space-y-2">
+      {% if method_med %}
+      <div class="flex items-start gap-3">
+        <span class="text-xs text-slate-300 w-10 pt-0.5 flex-shrink-0">手法</span>
+        <div class="flex flex-wrap gap-1">
+          {% for ll in method_med %}<span class="badge badge-method opacity-50">{{ ll.label.name }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if data_med %}
+      <div class="flex items-start gap-3">
+        <span class="text-xs text-slate-300 w-10 pt-0.5 flex-shrink-0">データ</span>
+        <div class="flex flex-wrap gap-1">
+          {% for ll in data_med %}<span class="badge badge-data opacity-50">{{ ll.label.name }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if theme_med %}
+      <div class="flex items-start gap-3">
+        <span class="text-xs text-slate-300 w-10 pt-0.5 flex-shrink-0">テーマ</span>
+        <div class="flex flex-wrap gap-1">
+          {% for ll in theme_med %}<span class="badge badge-theme opacity-50">{{ ll.label.name }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endif %}
 
