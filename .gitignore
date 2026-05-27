@@ -16,3 +16,5 @@ data/raw/pdfs/
 node_modules/
 .coverage
 htmlcov/
+dump*.sql
+*.bak
