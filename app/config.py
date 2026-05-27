@@ -4,7 +4,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/lab_recommend"
+    database_url: str
     secret_key: str = "dev-secret-key-change-in-production"
     app_env: str = "development"
     admin_username: str = "admin"
