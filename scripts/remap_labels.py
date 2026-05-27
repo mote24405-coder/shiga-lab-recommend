@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from sqlalchemy import delete, select
 from app.database import AsyncSessionLocal
 from app.models import Lab, Label, LabLabel, LabEvidence, ThesisLabel
+from sqlalchemy import union
 
 TEACHERS_JSON = "data/raw/teachers.json"
 
@@ -84,24 +85,35 @@ async def main():
                     WHERE le.source_type = 'official_site'
                 )
             """))
-            # 既存マスターラベルを削除して再投入（thesis_labelsが参照するラベルは残す）
+            # thesis_labels・lab_labels どちらにも参照されていないラベルのみ削除
+            referenced = union(
+                select(ThesisLabel.label_id),
+                select(LabLabel.label_id),
+            )
             await session.execute(
-                delete(Label).where(~Label.id.in_(
-                    select(ThesisLabel.label_id)
-                ))
+                delete(Label).where(~Label.id.in_(referenced))
             )
             print("official_site 由来のラベル・lab_labels・lab_evidenceをクリア（論文データは保持）")
 
+            # MASTER_LABELS にまだ存在しないラベルのみ追加
+            existing_labels = {
+                (l.label_type, l.name): l.id
+                for l in (await session.execute(select(Label))).scalars().all()
+            }
             total_inserted = 0
             for label_type, masters in MASTER_LABELS.items():
                 for m in masters:
-                    label = Label(label_type=label_type, name=m["name"])
-                    session.add(label)
-                    await session.flush()
-                    master_map[(label_type, m["name"])] = label.id
-                    total_inserted += 1
+                    key = (label_type, m["name"])
+                    if key in existing_labels:
+                        master_map[key] = existing_labels[key]
+                    else:
+                        label = Label(label_type=label_type, name=m["name"])
+                        session.add(label)
+                        await session.flush()
+                        master_map[key] = label.id
+                        total_inserted += 1
 
-            print(f"ラベル {total_inserted} 件を挿入 (手法:{len(MASTER_LABELS['method'])} データ:{len(MASTER_LABELS['data'])} テーマ:{len(MASTER_LABELS['theme'])})")
+            print(f"ラベル新規挿入: {total_inserted} 件 / 既存利用: {len(master_map) - total_inserted} 件")
 
     # Step2: 教員ごとにlab_labelsを付与
     total = 0
@@ -140,7 +152,15 @@ async def main():
                 for ltype, names in matched.items():
                     for master_name in sorted(names):
                         label_id = master_map[(ltype, master_name)]
-                        session.add(LabLabel(lab_id=lab.id, label_id=label_id, confidence="high"))
+                        # 既存の lab_labels はスキップ（import_to_db.py が作成済みの場合）
+                        exists = (await session.execute(
+                            select(LabLabel).where(
+                                LabLabel.lab_id == lab.id,
+                                LabLabel.label_id == label_id,
+                            )
+                        )).scalar_one_or_none()
+                        if not exists:
+                            session.add(LabLabel(lab_id=lab.id, label_id=label_id, confidence="high"))
                         session.add(LabEvidence(
                             lab_id=lab.id,
                             label_id=label_id,

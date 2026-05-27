@@ -7,7 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import get_settings
-from app.routers import labs, teachers, theses, recommend, search, surveys, admin
+from app.routers import labs, teachers, theses, recommend, search, surveys, admin, explore
 
 settings = get_settings()
 
@@ -36,6 +36,7 @@ app.include_router(recommend.router)
 app.include_router(search.router)
 app.include_router(surveys.router)
 app.include_router(admin.router)
+app.include_router(explore.router)
 
 
 @app.get("/")

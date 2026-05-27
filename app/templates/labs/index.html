@@ -82,17 +82,37 @@
 
   <!-- 研究室リスト -->
   <div class="flex-1">
-    <!-- グループ切り替え -->
-    <div class="flex items-center gap-1 mb-4">
-      <span class="text-xs text-slate-400 mr-1">グループ:</span>
-      {% for gval, glabel in [('method','手法別'),('data','データ別'),('theme','テーマ別'),('none','なし')] %}
-      <button type="button"
-              class="group-btn text-xs font-mono px-2 py-0.5 rounded border transition-colors
-                     {% if group_by == gval %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-500 border-slate-200 hover:border-slate-400{% endif %}"
-              data-gval="{{ gval }}"
-              onclick="setGroupBy('{{ gval }}')">{{ glabel }}</button>
-      {% endfor %}
-      <input type="hidden" id="group-input" value="{{ group_by }}">
+    <!-- ツールバー -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+
+      <!-- グループ切り替え -->
+      <div class="flex items-center gap-1">
+        <span class="text-xs text-slate-400 mr-1">グループ:</span>
+        {% for gval, glabel in [('method','手法別'),('data','データ別'),('theme','テーマ別'),('none','グループなし')] %}
+        <button type="button"
+                class="group-btn text-xs font-mono px-2 py-0.5 rounded border transition-colors
+                       {% if group_by == gval %}bg-teal-600 text-white border-teal-600{% else %}bg-white text-slate-500 border-slate-200 hover:border-slate-400{% endif %}"
+                data-gval="{{ gval }}"
+                onclick="setGroupBy('{{ gval }}')">{{ glabel }}</button>
+        {% endfor %}
+        <input type="hidden" id="group-input" value="{{ group_by }}">
+      </div>
+
+      <!-- 修士論文フィルタースイッチ -->
+      <button type="button" id="thesis-toggle" onclick="toggleThesisOnly()"
+              class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border transition-all select-none
+                     {% if thesis_only %}bg-teal-600 text-white border-teal-600 hover:bg-teal-700
+                     {% else %}bg-white text-slate-500 border-slate-300 hover:border-slate-400{% endif %}">
+        <!-- スライドスイッチ -->
+        <span class="relative inline-flex w-7 h-4 rounded-full transition-colors flex-shrink-0
+                     {% if thesis_only %}bg-white/30{% else %}bg-slate-300{% endif %}">
+          <span class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform duration-200
+                       {% if thesis_only %}translate-x-3{% else %}translate-x-0{% endif %}"></span>
+        </span>
+        修士論文あり
+      </button>
+      <input type="hidden" id="thesis-only-input" value="{{ '1' if thesis_only else '0' }}">
+
     </div>
     <div id="lab-list">
       {% include "labs/partial_list.html" %}
@@ -108,7 +128,32 @@
     });
     params.set('match', document.getElementById('match-input').value);
     params.set('group_by', document.getElementById('group-input').value);
+    params.set('thesis_only', document.getElementById('thesis-only-input').value);
     return '/labs/partial?' + params.toString();
+  }
+
+  function toggleThesisOnly() {
+    const input = document.getElementById('thesis-only-input');
+    const btn   = document.getElementById('thesis-toggle');
+    const isOn  = input.value === '1';
+    const newOn = !isOn;
+    input.value = newOn ? '1' : '0';
+
+    const dot   = btn.querySelector('span > span');
+    const track = btn.querySelector('span');
+
+    if (newOn) {
+      btn.className   = btn.className.replace('bg-white text-slate-500 border-slate-300 hover:border-slate-400', 'bg-teal-600 text-white border-teal-600 hover:bg-teal-700');
+      track.className = track.className.replace('bg-slate-300', 'bg-white/30');
+      dot.classList.add('translate-x-3');
+      dot.classList.remove('translate-x-0');
+    } else {
+      btn.className   = btn.className.replace('bg-teal-600 text-white border-teal-600 hover:bg-teal-700', 'bg-white text-slate-500 border-slate-300 hover:border-slate-400');
+      track.className = track.className.replace('bg-white/30', 'bg-slate-300');
+      dot.classList.remove('translate-x-3');
+      dot.classList.add('translate-x-0');
+    }
+    htmx.ajax('GET', buildLabsUrl(), { target: '#lab-list', swap: 'innerHTML' });
   }
 
   function setGroupBy(gval) {
