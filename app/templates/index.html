@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}滋賀大学DS研究科 研究室探索{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<div class="bg-gradient-to-br from-teal-800 to-teal-600 rounded-lg px-8 py-14 text-center text-white mb-10">
+  <p class="text-teal-200 text-xs font-mono tracking-widest uppercase mb-3">Shiga University · Data Science</p>
+  <h1 class="text-3xl font-bold tracking-tight mb-3">あなたに合った研究室を見つけよう</h1>
+  <p class="text-teal-100 mb-8 text-base">ラベルで絞り込む・興味からマッチングする。</p>
+
+  <form action="/search" method="get" class="flex gap-2 max-w-lg mx-auto mb-8">
+    <input type="text" name="q" placeholder="キーワード検索（機械学習、医療、NLP …）"
+           class="flex-1 form-input bg-white/95 text-slate-800 px-4 py-2.5 text-base placeholder-slate-400">
+    <button type="submit" class="btn-primary px-5 py-2.5 text-sm font-medium whitespace-nowrap">
+      検索
+    </button>
+  </form>
+
+  <div class="flex justify-center gap-3 flex-wrap">
+    <a href="/recommend" class="bg-white text-teal-700 font-medium px-5 py-2 rounded text-sm hover:bg-teal-50 transition">
+      マッチングを試す →
+    </a>
+    <a href="/labs" class="bg-teal-700 text-white font-medium px-5 py-2 rounded text-sm border border-teal-500 hover:bg-teal-600 transition">
+      研究室一覧
+    </a>
+  </div>
+</div>
+
+<!-- 3ステップ -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-200 border border-slate-200 rounded-lg overflow-hidden mb-10">
+  {% for num, title, desc in [
+    ('01', 'ラベルを選ぶ', '手法・データ・テーマのラベルから興味を選択'),
+    ('02', 'マッチング', 'スコアの高い順に研究室をランキング表示'),
+    ('03', '詳細を確認', '論文・ラベル・教員情報で研究室を深掘り')
+  ] %}
+  <div class="bg-white px-6 py-5">
+    <p class="font-mono text-xs text-teal-600 mb-2">{{ num }}</p>
+    <p class="font-semibold text-slate-800 mb-1 tracking-tight">{{ title }}</p>
+    <p class="text-sm text-slate-500 leading-relaxed">{{ desc }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<p class="text-center text-xs text-slate-400">
+  ※ この情報は公開情報をもとにした参考情報です。実際の受け入れ状況や研究内容は必ず各教員にご確認ください。
+</p>
+{% endblock %}

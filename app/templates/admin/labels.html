@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}ラベル管理{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">ラベル一覧 <span class="text-base font-normal text-gray-400">{{ labels | length }} 件</span></h1>
+  <a href="/admin" class="text-sm text-gray-500 hover:underline">← ダッシュボード</a>
+</div>
+{% set type_colors = {"method": "blue", "data": "green", "theme": "orange", "style": "purple"} %}
+{% for ltype in ["method", "data", "theme", "style"] %}
+{% set typed = labels | selectattr('label_type', 'eq', ltype) | list %}
+{% if typed %}
+<h2 class="font-semibold text-gray-600 mb-2 mt-4 capitalize">{{ {"method":"手法","data":"データ","theme":"テーマ","style":"スタイル"}[ltype] }}</h2>
+<div class="flex flex-wrap gap-2 mb-4">
+  {% for label in typed %}
+  <span class="px-3 py-1 rounded-full border text-sm
+    {% if ltype == 'method' %}bg-blue-50 text-blue-700 border-blue-200
+    {% elif ltype == 'data' %}bg-green-50 text-green-700 border-green-200
+    {% elif ltype == 'theme' %}bg-orange-50 text-orange-700 border-orange-200
+    {% else %}bg-purple-50 text-purple-700 border-purple-200{% endif %}">
+    {{ label.name }}
+  </span>
+  {% endfor %}
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}検索ログ{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">検索ログ <span class="text-base font-normal text-gray-400">{{ logs | length }} 件</span></h1>
+  <a href="/admin" class="text-sm text-gray-500 hover:underline">← ダッシュボード</a>
+</div>
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+  <table class="min-w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="text-left px-4 py-3">日時</th>
+        <th class="text-left px-4 py-3">検索ワード</th>
+        <th class="text-left px-4 py-3">展開キーワード</th>
+        <th class="text-left px-4 py-3">件数</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{{ log.created_at.strftime('%m/%d %H:%M') if log.created_at else '' }}</td>
+        <td class="px-4 py-3 font-medium">{{ log.query_text or '—' }}</td>
+        <td class="px-4 py-3 text-gray-500 text-xs">{{ (log.expanded_keywords or []) | join(', ') }}</td>
+        <td class="px-4 py-3 text-gray-600">{{ log.result_count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

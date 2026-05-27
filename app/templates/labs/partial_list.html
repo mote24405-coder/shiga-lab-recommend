@@ -1,0 +1,128 @@
+{# 最大10色のパレット（グループごとに循環割り当て） #}
+{% set palette = [
+  '#2563eb',
+  '#7c3aed',
+  '#059669',
+  '#d97706',
+  '#dc2626',
+  '#0891b2',
+  '#db2777',
+  '#65a30d',
+  '#ea580c',
+  '#0f766e',
+] %}
+
+{% macro lab_card(lab, accent_color='') %}
+{% set method_labels = lab.lab_labels | selectattr('label.label_type', 'eq', 'method') | list %}
+{% set data_labels   = lab.lab_labels | selectattr('label.label_type', 'eq', 'data')   | list %}
+{% set theme_labels  = lab.lab_labels | selectattr('label.label_type', 'eq', 'theme')  | list %}
+{% if accent_color %}
+  {# グループ別カラーをインラインで適用 #}
+  {% set card_extra = 'style="border-left: 3px solid ' + accent_color + ';"' %}
+  {% set card_cls = 'card' %}
+{% else %}
+  {% set card_extra = '' %}
+  {% set card_cls = 'card ' + ('card-accent-method' if method_labels else ('card-accent-data' if data_labels else 'card-accent-theme')) %}
+{% endif %}
+<a href="/labs/{{ lab.id }}" class="{{ card_cls }} block p-4 group" {{ card_extra | safe }}>
+  <div class="flex items-start justify-between gap-2 mb-0.5">
+    <p class="font-semibold text-slate-800 tracking-tight text-base group-hover:text-teal-700 transition-colors leading-snug">
+      {{ lab.name }}
+    </p>
+    {% if lab.theses %}
+    <span class="text-xs text-slate-400 font-mono flex-shrink-0 mt-0.5">修士論文{{ lab.theses | length }}件</span>
+    {% endif %}
+  </div>
+  {% if lab.teachers %}
+  <p class="text-sm text-slate-400 mb-2">{{ lab.teachers | map(attribute='name') | join(' · ') }}</p>
+  {% else %}
+  <div class="mb-2"></div>
+  {% endif %}
+  {% if lab.description %}
+  <p class="text-sm text-slate-500 mb-3 leading-relaxed line-clamp-2">{{ lab.description | truncate(120, True, '…') }}</p>
+  {% endif %}
+  {% if method_labels or data_labels or theme_labels %}
+  <div class="flex flex-wrap gap-1">
+    {% for ll in method_labels %}<span class="badge badge-method">{{ ll.label.name }}</span>{% endfor %}
+    {% for ll in data_labels   %}<span class="badge badge-data">{{ ll.label.name }}</span>{% endfor %}
+    {% for ll in theme_labels  %}<span class="badge badge-theme">{{ ll.label.name }}</span>{% endfor %}
+  </div>
+  {% endif %}
+</a>
+{% endmacro %}
+
+{% set gtype = group_by | default('method') %}
+
+{% if labs %}
+
+{% if gtype in ['method', 'data', 'theme'] %}
+
+{# 代表ラベル（同タイプの先頭）を収集 #}
+{% set ns_keys = namespace(ids=[], names=[]) %}
+{% for lab in labs %}
+  {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list %}
+  {% if primary and primary[0].label.id not in ns_keys.ids %}
+    {% set ns_keys.ids   = ns_keys.ids   + [primary[0].label.id] %}
+    {% set ns_keys.names = ns_keys.names + [primary[0].label.name] %}
+  {% endif %}
+{% endfor %}
+
+{# ラベルごとにセクション描画（パレットから色を割り当て） #}
+{% for i in range(ns_keys.ids | length) %}
+  {% set cur_id    = ns_keys.ids[i] %}
+  {% set cur_name  = ns_keys.names[i] %}
+  {% set cur_color = palette[i % (palette | length)] %}
+
+  {% set ns_grp = namespace(grp=[]) %}
+  {% for lab in labs %}
+    {% set primary = lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list %}
+    {% if primary and primary[0].label.id == cur_id %}
+      {% set ns_grp.grp = ns_grp.grp + [lab] %}
+    {% endif %}
+  {% endfor %}
+
+  {% if ns_grp.grp %}
+  <div class="mb-8">
+    <div class="flex items-center gap-2 mb-3"
+         style="border-left: 3px solid {{ cur_color }}; padding-left: 8px;">
+      <p class="text-sm font-semibold tracking-wide"
+         style="color: {{ cur_color }};">{{ cur_name }}</p>
+      <span class="text-xs text-slate-400 font-mono">{{ ns_grp.grp | length }}</span>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for lab in ns_grp.grp %}{{ lab_card(lab, accent_color=cur_color) }}{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+{% endfor %}
+
+{# 該当タイプのラベルがない研究室 → その他 #}
+{% set ns_other = namespace(other=[]) %}
+{% for lab in labs %}
+  {% if not (lab.lab_labels | selectattr('label.label_type', 'eq', gtype) | list) %}
+    {% set ns_other.other = ns_other.other + [lab] %}
+  {% endif %}
+{% endfor %}
+{% if ns_other.other %}
+<div class="mb-8">
+  <div class="flex items-center gap-2 mb-3"
+       style="border-left: 3px solid #94a3b8; padding-left: 8px;">
+    <p class="text-sm font-semibold text-slate-400">その他</p>
+    <span class="text-xs text-slate-400 font-mono">{{ ns_other.other | length }}</span>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {% for lab in ns_other.other %}{{ lab_card(lab) }}{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+{# グループなし: フラットグリッド #}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+  {% for lab in labs %}{{ lab_card(lab) }}{% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<p class="text-slate-400 text-sm py-10 text-center">該当する研究室がありません。</p>
+{% endif %}

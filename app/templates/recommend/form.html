@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}研究室マッチング{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  <!-- ヘッダー -->
+  <div class="flex items-end justify-between mb-4">
+    <div>
+      <p class="text-xs font-mono text-teal-600 tracking-widest uppercase mb-1">Matching</p>
+      <h1 class="text-2xl font-bold text-slate-800 tracking-tight">研究室マッチング</h1>
+    </div>
+    <div class="text-right">
+      <span id="selection-count" class="font-mono text-3xl font-bold text-teal-700">0</span>
+      <p class="text-sm text-slate-400">個選択中</p>
+    </div>
+  </div>
+
+  <!-- 操作説明 -->
+  <div class="bg-slate-50 border border-slate-200 rounded-md px-4 py-3 mb-8">
+    <p class="text-base font-medium text-slate-700 mb-1">興味のあるラベルを選んでください</p>
+    <p class="text-sm text-slate-500 leading-relaxed">
+      手法・データ・テーマの3カテゴリからいくつでも選択できます。
+      選んだラベルとの一致度をもとに、マッチ度の高い研究室を表示します。
+    </p>
+  </div>
+
+  <form action="/recommend" method="post" id="recommend-form">
+
+    <!-- 手法 -->
+    <div class="mb-0">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-1 h-5 rounded-sm" style="background:#1d4ed8"></span>
+        <h2 class="text-lg font-semibold text-slate-700">手法</h2>
+        <span class="text-sm text-slate-400">複数選択可</span>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 mb-6">
+        {% for label in method_labels %}
+        <label class="check-row" data-ltype="method">
+          <input type="checkbox" name="method_ids" value="{{ label.id }}"
+                 class="sr-only label-cb" data-ltype="method">
+          <span class="cb-icon"></span>
+          <span class="text-base text-slate-600">{{ label.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-1 h-5 rounded-sm" style="background:#047857"></span>
+        <h2 class="text-lg font-semibold text-slate-700">データ</h2>
+        <span class="text-sm text-slate-400">複数選択可</span>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 mb-6">
+        {% for label in data_labels %}
+        <label class="check-row" data-ltype="data">
+          <input type="checkbox" name="data_ids" value="{{ label.id }}"
+                 class="sr-only label-cb" data-ltype="data">
+          <span class="cb-icon"></span>
+          <span class="text-base text-slate-600">{{ label.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="section-divider">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="w-1 h-5 rounded-sm" style="background:#c2410c"></span>
+        <h2 class="text-lg font-semibold text-slate-700">テーマ</h2>
+        <span class="text-sm text-slate-400">複数選択可</span>
+      </div>
+      <div class="grid grid-cols-2 gap-1.5 mb-6">
+        {% for label in theme_labels %}
+        <label class="check-row" data-ltype="theme">
+          <input type="checkbox" name="theme_ids" value="{{ label.id }}"
+                 class="sr-only label-cb" data-ltype="theme">
+          <span class="cb-icon"></span>
+          <span class="text-base text-slate-600">{{ label.name }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- 自由入力 -->
+    <div class="section-divider mb-8">
+      <div class="flex items-center gap-2 mb-2">
+        <h2 class="text-lg font-semibold text-slate-700">自由入力</h2>
+        <span class="text-sm text-slate-400">任意</span>
+      </div>
+      <p class="text-sm text-slate-400 mb-2">上のラベル以外でも書けます。ラベルを自動推定します。</p>
+      <textarea name="free_text" rows="3"
+                placeholder="例：医療画像を使って疾患を予測したい、テキストデータの分析に興味がある..."
+                class="form-input w-full px-3 py-2.5 text-base resize-none text-slate-700 placeholder-slate-300"></textarea>
+    </div>
+
+    <button type="submit" class="btn-primary w-full py-3 text-base font-medium">
+      マッチング結果を見る →
+    </button>
+  </form>
+</div>
+
+<script>
+  const COLORS = {
+    method: '#1d4ed8',
+    data:   '#047857',
+    theme:  '#c2410c',
+  };
+
+  function syncRow(cb) {
+    const row  = cb.closest('label');
+    const icon = row.querySelector('.cb-icon');
+    const c    = COLORS[cb.dataset.ltype] || COLORS.method;
+    if (cb.checked) {
+      row.classList.add('is-checked');
+      icon.style.borderColor = c;
+      icon.style.background  = c;
+      icon.innerHTML = '<svg class="w-2.5 h-2.5" viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else {
+      row.classList.remove('is-checked');
+      icon.style.borderColor = '#cbd5e1';
+      icon.style.background  = '#fff';
+      icon.innerHTML = '';
+    }
+  }
+
+  function updateCount() {
+    document.getElementById('selection-count').textContent =
+      document.querySelectorAll('.label-cb:checked').length;
+  }
+
+  document.querySelectorAll('.label-cb').forEach(cb => {
+    cb.addEventListener('change', () => { syncRow(cb); updateCount(); });
+  });
+</script>
+{% endblock %}

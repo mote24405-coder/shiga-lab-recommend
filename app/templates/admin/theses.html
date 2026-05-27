@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}論文管理{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-800">修士論文一覧 <span class="text-base font-normal text-gray-400">{{ theses | length }} 件</span></h1>
+  <a href="/admin" class="text-sm text-gray-500 hover:underline">← ダッシュボード</a>
+</div>
+<div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+  <table class="min-w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="text-left px-4 py-3">年度</th>
+        <th class="text-left px-4 py-3">タイトル</th>
+        <th class="text-left px-4 py-3">著者</th>
+        <th class="text-left px-4 py-3">研究室</th>
+        <th class="text-left px-4 py-3">ラベル</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for thesis in theses %}
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="px-4 py-3 text-gray-400">{{ thesis.year or '—' }}</td>
+        <td class="px-4 py-3 font-medium max-w-xs truncate">{{ thesis.title }}</td>
+        <td class="px-4 py-3 text-gray-600">{{ thesis.author_name or '—' }}</td>
+        <td class="px-4 py-3 text-gray-500">{{ thesis.lab.name if thesis.lab else '—' }}</td>
+        <td class="px-4 py-3">
+          {% for tl in thesis.thesis_labels %}
+          <span class="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded text-xs mr-0.5">{{ tl.label.name }}</span>
+          {% endfor %}
+        </td>
+        <td class="px-4 py-3">
+          {% if thesis.repo_url %}
+          <a href="{{ thesis.repo_url }}" target="_blank" rel="noopener" class="text-blue-500 hover:underline text-xs">リポジトリ</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
