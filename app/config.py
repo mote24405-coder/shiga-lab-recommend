@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -12,14 +13,14 @@ class Settings(BaseSettings):
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
-    def model_post_init(self, __context) -> None:
-        # Railway provides DATABASE_URL as postgres:// or postgresql://
-        # Convert to postgresql+asyncpg:// for asyncpg
-        url = self.database_url
-        if url.startswith("postgres://"):
-            object.__setattr__(self, "database_url", "postgresql+asyncpg://" + url[len("postgres://"):])
-        elif url.startswith("postgresql://"):
-            object.__setattr__(self, "database_url", "postgresql+asyncpg://" + url[len("postgresql://"):])
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        if v.startswith("postgres://"):
+            return "postgresql+asyncpg://" + v[len("postgres://"):]
+        if v.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + v[len("postgresql://"):]
+        return v
 
 
 @lru_cache
