@@ -7,7 +7,7 @@ OpenAI抽出ラベルをDBにインポート。
   data/processed/openai_labels.json -- OpenAI抽出ラベル（v2: supervisor_name含む）
 
 処理:
-  1. labels テーブルの確認（migration 0003 で投入済みを前提）
+  1. labels テーブルの確認（migration 0003 で MASTER_LABELS 準拠の名前で投入済みを前提）
   2. theses を repo_item_id で upsert
   3. supervisor_name → Teacher.name マッチングで lab_id を設定
   4. thesis_labels を作成
@@ -24,21 +24,19 @@ THESES_JSON = "data/raw/theses.json"
 LABELS_JSON = "data/processed/openai_labels.json"
 
 METHOD_LABELS = [
-    "深層学習", "統計モデリング", "時系列解析",
-    "自然言語処理", "コンピュータビジョン", "ベイズ手法",
-    "強化学習", "因果推論", "最適化", "ネットワーク分析", "データ同化",
+    "機械学習・深層学習", "統計的モデリング", "自然言語処理",
+    "画像処理・CV", "最適化", "時系列解析", "シミュレーション",
 ]
 DATA_LABELS = [
-    "画像・映像", "音声", "テキスト", "時系列・センサー",
-    "数値・表形式", "地理空間", "IoT",
+    "テキスト・言語データ", "画像・映像データ", "時系列・センサーデータ",
+    "音声データ", "医療・生体データ", "地理空間データ", "数値・表形式データ",
 ]
 THEME_LABELS = [
-    "製造・ものづくり", "医療・ヘルスケア", "農業・自然科学",
-    "教育", "経済・金融", "社会・政策", "スポーツ",
-    "マーケティング・消費", "交通・インフラ", "音楽・メディア",
+    "機械学習", "統計・数理", "テキスト・言語処理", "画像・映像",
+    "最適化", "医療・ヘルスケア", "社会・政策", "経済・ビジネス",
+    "IoT・センサー・時系列", "空間・交通", "製造・農業・環境", "音楽・メディア・デザイン",
 ]
 LABEL_TYPE_MAP = {"method": METHOD_LABELS, "data": DATA_LABELS, "theme": THEME_LABELS}
-
 
 async def load_label_id_map(session) -> dict[tuple[str, str], int]:
     """DBから {(type, name): id} マップを構築"""
@@ -128,11 +126,13 @@ async def upsert_thesis_labels(session, thesis_id: int, item: dict, label_id_map
         await session.delete(tl)
 
     confidence = item.get("confidence", "medium")
-    for label_type, names in LABEL_TYPE_MAP.items():
+    seen: set[int] = set()
+    for label_type in LABEL_TYPE_MAP:
         for name in (item.get(label_type) or []):
             label_id = label_id_map.get((label_type, name))
-            if not label_id:
+            if not label_id or label_id in seen:
                 continue
+            seen.add(label_id)
             session.add(ThesisLabel(thesis_id=thesis_id, label_id=label_id, confidence=confidence))
 
     await session.flush()

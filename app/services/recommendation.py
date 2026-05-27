@@ -58,9 +58,11 @@ async def compute_recommendations(
 
     scores: list[RecommendationScore] = []
     for lab in labs:
-        lab_method_ids = {ll.label_id for ll in lab.lab_labels if ll.label.label_type == "method"}
-        lab_data_ids = {ll.label_id for ll in lab.lab_labels if ll.label.label_type == "data"}
-        lab_theme_ids = {ll.label_id for ll in lab.lab_labels if ll.label.label_type == "theme"}
+        # high のみを使用 (medium は補助情報だが discriminability が下がるため除外)
+        high_labels = [ll for ll in lab.lab_labels if ll.confidence == "high"]
+        lab_method_ids = {ll.label_id for ll in high_labels if ll.label.label_type == "method"}
+        lab_data_ids = {ll.label_id for ll in high_labels if ll.label.label_type == "data"}
+        lab_theme_ids = {ll.label_id for ll in high_labels if ll.label.label_type == "theme"}
 
         method_score = _jaccard(user_method, lab_method_ids)
         data_score = _jaccard(user_data, lab_data_ids)
@@ -75,7 +77,7 @@ async def compute_recommendations(
         if total == 0.0:
             continue
 
-        label_map = {ll.label_id: ll.label.name for ll in lab.lab_labels}
+        label_map = {ll.label_id: ll.label.name for ll in high_labels}
         matched_method = [label_map[i] for i in user_method & lab_method_ids]
         matched_data = [label_map[i] for i in user_data & lab_data_ids]
         matched_theme = [label_map[i] for i in user_theme & lab_theme_ids]

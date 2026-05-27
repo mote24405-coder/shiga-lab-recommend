@@ -18,7 +18,7 @@
 
       <!-- Desktop -->
       <div class="hidden sm:flex items-center gap-1 h-full">
-        {% set nav_items = [('/labs', '研究室一覧'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
+        {% set nav_items = [('/labs', '研究室一覧'), ('/explore', 'データ探索'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
         {% for path, label in nav_items %}
         {% set active = (path == '/' and request.url.path == '/') or (path != '/' and request.url.path.startswith(path)) %}
         <a href="{{ path }}"
@@ -40,7 +40,7 @@
     </div>
 
     <div id="mobile-nav" class="hidden sm:hidden border-t border-slate-100 bg-white px-6 pb-3">
-      {% for path, label in [('/labs', '研究室一覧'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
+      {% for path, label in [('/labs', '研究室一覧'), ('/explore', 'データ探索'), ('/recommend', '推薦'), ('/search', '検索'), ('/surveys', 'アンケート')] %}
       {% set active = (path == '/' and request.url.path == '/') or (path != '/' and request.url.path.startswith(path)) %}
       <a href="{{ path }}"
          class="block py-2.5 text-sm border-b border-slate-50 last:border-0

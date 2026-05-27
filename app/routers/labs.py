@@ -18,9 +18,11 @@ async def labs_index(
     label_ids: list[int] = Query(default=[]),
     match: str = Query(default="or"),
     group_by: str = Query(default="method"),
+    thesis_only: str = Query(default="1"),
 ):
+    only = thesis_only != "0"
     labels_all = await crud.get_labels(db)
-    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match)
+    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match, thesis_only=only)
     return templates.TemplateResponse("labs/index.html", {
         "request": request,
         "labs": labs,
@@ -28,6 +30,7 @@ async def labs_index(
         "selected_label_ids": label_ids,
         "match_mode": match,
         "group_by": group_by,
+        "thesis_only": only,
     })
 
 
@@ -38,9 +41,11 @@ async def labs_partial(
     label_ids: list[int] = Query(default=[]),
     match: str = Query(default="or"),
     group_by: str = Query(default="method"),
+    thesis_only: str = Query(default="1"),
 ):
     """HTMX用：ラベル絞り込み後の研究室リスト断片を返す。"""
-    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match)
+    only = thesis_only != "0"
+    labs = await crud.get_labs(db, label_ids=label_ids or None, match=match, thesis_only=only)
     return templates.TemplateResponse("labs/partial_list.html", {
         "request": request,
         "labs": labs,

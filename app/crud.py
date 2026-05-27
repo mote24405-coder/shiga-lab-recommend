@@ -18,12 +18,10 @@ async def get_labs(
     db: AsyncSession,
     label_ids: list[int] | None = None,
     match: str = "or",
+    thesis_only: bool = True,
     skip: int = 0,
     limit: int = 100,
 ) -> list[Lab]:
-    # 論文が1件以上紐づいている研究室のみ
-    has_thesis = select(Thesis.lab_id).where(Thesis.lab_id == Lab.id).exists()
-
     stmt = (
         select(Lab)
         .options(
@@ -31,10 +29,12 @@ async def get_labs(
             selectinload(Lab.lab_labels).selectinload(LabLabel.label),
             selectinload(Lab.theses),
         )
-        .where(has_thesis)
         .offset(skip).limit(limit)
         .order_by(Lab.name)
     )
+    if thesis_only:
+        has_thesis = select(Thesis.lab_id).where(Thesis.lab_id == Lab.id).exists()
+        stmt = stmt.where(has_thesis)
     if label_ids:
         if match == "and":
             # lab_labels に全ラベルが揃っている研究室のみ
@@ -322,6 +322,128 @@ async def get_popular_labels(db: AsyncSession, limit: int = 10) -> list[dict]:
         {"label": labels_map[r.label_id], "count": r.cnt}
         for r in rows if r.label_id in labels_map
     ]
+
+
+async def get_data_landscape(db: AsyncSession) -> dict:
+    """探索ページ用: データ種別・手法別・言語別の研究室マップを返す。"""
+    # 1. Load labels of type data/method
+    labels = (
+        await db.execute(
+            select(Label)
+            .where(Label.label_type.in_(["data", "method"]))
+            .order_by(Label.label_type, Label.name)
+        )
+    ).scalars().all()
+    label_by_id: dict[int, Label] = {lbl.id: lbl for lbl in labels}
+
+    # 2. Load lab_labels for those label IDs
+    ll_rows = (
+        await db.execute(
+            select(LabLabel).where(LabLabel.label_id.in_(list(label_by_id.keys())))
+        )
+    ).scalars().all()
+
+    # 3. label_id → lab_ids
+    label_to_lab_ids: dict[int, set[int]] = {}
+    for ll in ll_rows:
+        label_to_lab_ids.setdefault(ll.label_id, set()).add(ll.lab_id)
+
+    # 4. Load labs with teachers
+    all_lab_ids: set[int] = set()
+    for ids in label_to_lab_ids.values():
+        all_lab_ids.update(ids)
+    labs_by_id: dict[int, Lab] = {}
+    if all_lab_ids:
+        for lab in (
+            await db.execute(
+                select(Lab).options(selectinload(Lab.teachers)).where(Lab.id.in_(all_lab_ids))
+            )
+        ).scalars():
+            labs_by_id[lab.id] = lab
+
+    # 5. Load theses with raw_labels for those labs
+    theses = (
+        await db.execute(
+            select(Thesis).where(Thesis.lab_id.in_(all_lab_ids), Thesis.raw_labels.isnot(None))
+        )
+    ).scalars().all()
+
+    # 6. Build per-lab raw example sets and thesis ID sets
+    lab_data_raws: dict[int, set[str]] = {}
+    lab_method_raws: dict[int, set[str]] = {}
+    lab_thesis_ids: dict[int, set[int]] = {}
+    for thesis in theses:
+        raw = thesis.raw_labels or {}
+        lid = thesis.lab_id
+        if lid is None:
+            continue
+        lab_thesis_ids.setdefault(lid, set()).add(thesis.id)
+        for d in raw.get("data_raw", []):
+            if d:
+                lab_data_raws.setdefault(lid, set()).add(d)
+        for m in raw.get("method_raw", []):
+            if m:
+                lab_method_raws.setdefault(lid, set()).add(m)
+
+    # 7. Build category entries per label — include per-lab breakdown
+    data_map: dict[int, dict] = {}
+    method_map: dict[int, dict] = {}
+    for label in labels:
+        lab_ids = label_to_lab_ids.get(label.id, set())
+        if not lab_ids:
+            continue
+        thesis_ids: set[int] = set()
+        for lid in lab_ids:
+            thesis_ids.update(lab_thesis_ids.get(lid, set()))
+
+        # per-lab list: [{lab, examples}] sorted by example count desc
+        raws_key = lab_data_raws if label.label_type == "data" else lab_method_raws
+        labs_with_data = sorted(
+            [
+                {
+                    "lab": labs_by_id[lid],
+                    "examples": sorted(raws_key.get(lid, set())),
+                }
+                for lid in lab_ids if lid in labs_by_id
+            ],
+            key=lambda x: -len(x["examples"]),
+        )
+
+        entry = {
+            "label": label,
+            "thesis_count": len(thesis_ids),
+            "lab_count": len(lab_ids),
+            "labs_with_data": labs_with_data,
+        }
+        if label.label_type == "data":
+            data_map[label.id] = entry
+        else:
+            method_map[label.id] = entry
+
+    # 8. Programming languages from all raw_labels
+    lang_map: dict[str, dict] = {}
+    for thesis in (
+        await db.execute(select(Thesis).where(Thesis.raw_labels.isnot(None)))
+    ).scalars():
+        raw = thesis.raw_labels or {}
+        for lang in raw.get("programming_language", []):
+            if lang:
+                entry_l = lang_map.setdefault(lang, {"thesis_ids": set(), "lab_ids": set()})
+                entry_l["thesis_ids"].add(thesis.id)
+                if thesis.lab_id:
+                    entry_l["lab_ids"].add(thesis.lab_id)
+
+    return {
+        "data_categories": sorted(data_map.values(), key=lambda x: -x["thesis_count"]),
+        "method_categories": sorted(method_map.values(), key=lambda x: -x["thesis_count"]),
+        "languages": sorted(
+            [
+                {"name": name, "thesis_count": len(m["thesis_ids"]), "lab_count": len(m["lab_ids"])}
+                for name, m in lang_map.items()
+            ],
+            key=lambda x: -x["thesis_count"],
+        ),
+    }
 
 
 async def get_survey_responses(
