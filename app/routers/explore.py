@@ -13,7 +13,12 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templa
 @router.get("")
 async def explore_index(request: Request, db: AsyncSession = Depends(get_db)):
     landscape = await crud.get_data_landscape(db)
+    labels_all = await crud.get_labels(db)
+    labels_by_type: dict[str, list] = {}
+    for label in labels_all:
+        labels_by_type.setdefault(label.label_type, []).append(label)
     return templates.TemplateResponse("explore/index.html", {
         "request": request,
         **landscape,
+        "labels_by_type": labels_by_type,
     })
