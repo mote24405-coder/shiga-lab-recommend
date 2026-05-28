@@ -9,7 +9,7 @@
 
 <!-- タブ切り替え -->
 <div class="flex gap-1 border-b border-slate-200 mb-8">
-  {% for tab_id, tab_label in [('data','データ種別'),('method','手法・モデル'),('lang','プログラミング言語')] %}
+  {% for tab_id, tab_label in [('data','データ種別'),('method','手法・モデル'),('theme','研究テーマ'),('lang','プログラミング言語')] %}
   <button type="button"
           class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors
                  {% if loop.first %}border-teal-600 text-teal-700{% else %}border-transparent text-slate-500 hover:text-slate-700{% endif %}"
@@ -97,6 +97,18 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
     {% for cat in method_categories %}
     {{ category_card(cat, '#2563eb', 'bg-blue-50 text-blue-800 border border-blue-200', '手法') }}
+    {% else %}
+    <p class="text-slate-400 col-span-2">データがありません</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ─── 研究テーマパネル ─── -->
+<div id="panel-theme" class="tab-panel hidden">
+  <p class="text-xs text-slate-400 mb-5">研究室名をクリックすると研究室の詳細ページへ移動します。</p>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% for cat in theme_categories %}
+    {{ category_card(cat, '#d97706', 'bg-amber-50 text-amber-800 border border-amber-200', 'テーマ') }}
     {% else %}
     <p class="text-slate-400 col-span-2">データがありません</p>
     {% endfor %}

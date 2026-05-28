@@ -332,7 +332,7 @@ async def get_data_landscape(db: AsyncSession) -> dict:
     labels = (
         await db.execute(
             select(Label)
-            .where(Label.label_type.in_(["data", "method"]))
+            .where(Label.label_type.in_(["data", "method", "theme"]))
             .order_by(Label.label_type, Label.name)
         )
     ).scalars().all()
@@ -390,6 +390,7 @@ async def get_data_landscape(db: AsyncSession) -> dict:
     # 7. Build category entries per label — include per-lab breakdown
     data_map: dict[int, dict] = {}
     method_map: dict[int, dict] = {}
+    theme_map: dict[int, dict] = {}
     for label in labels:
         lab_ids = label_to_lab_ids.get(label.id, set())
         if not lab_ids:
@@ -419,8 +420,10 @@ async def get_data_landscape(db: AsyncSession) -> dict:
         }
         if label.label_type == "data":
             data_map[label.id] = entry
-        else:
+        elif label.label_type == "method":
             method_map[label.id] = entry
+        else:
+            theme_map[label.id] = entry
 
     # 8. Programming languages from all raw_labels
     lang_map: dict[str, dict] = {}
@@ -438,6 +441,7 @@ async def get_data_landscape(db: AsyncSession) -> dict:
     return {
         "data_categories": sorted(data_map.values(), key=lambda x: -x["thesis_count"]),
         "method_categories": sorted(method_map.values(), key=lambda x: -x["thesis_count"]),
+        "theme_categories": sorted(theme_map.values(), key=lambda x: -x["thesis_count"]),
         "languages": sorted(
             [
                 {"name": name, "thesis_count": len(m["thesis_ids"]), "lab_count": len(m["lab_ids"])}
