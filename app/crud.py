@@ -87,6 +87,25 @@ async def get_labs_by_ids(db: AsyncSession, lab_ids: list[int]) -> list[Lab]:
     return result.scalars().unique().all()
 
 
+# ── Research examples ─────────────────────────────────────────────
+async def list_research_example_candidates(db: AsyncSession) -> list[Thesis]:
+    stmt = (
+        select(Thesis)
+        .options(
+            selectinload(Thesis.lab),
+            selectinload(Thesis.thesis_labels).selectinload(ThesisLabel.label),
+        )
+        .where(Thesis.lab_id.isnot(None))
+        .where(Thesis.summary_ja.isnot(None))
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def find_thesis(db: AsyncSession, thesis_id: int) -> Thesis | None:
+    return await db.get(Thesis, thesis_id)
+
+
 # ── Labels ─────────────────────────────────────────────
 async def get_labels(db: AsyncSession, label_type: str | None = None) -> list[Label]:
     stmt = select(Label).order_by(Label.label_type, Label.name)
