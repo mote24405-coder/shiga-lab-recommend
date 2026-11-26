@@ -189,7 +189,8 @@
     {% set raw = thesis.raw_labels or {} %}
     {% set data_raw = raw.get('data_raw', []) %}
     {% set method_raw = raw.get('method_raw', []) %}
-    <div class="px-5 py-4">
+    <div id="thesis-{{ thesis.id }}" class="thesis-item px-5 py-4">
+      <span class="selected-example-note">選んだ研究例</span>
       <p class="text-sm text-slate-700 font-medium leading-snug mb-1">{{ thesis.title }}</p>
       <p class="text-xs text-slate-400 mb-2">
         {% if thesis.year %}{{ thesis.year }}年{% endif %}
@@ -210,8 +211,10 @@
       </div>
       {% endif %}
 
-      {% if thesis.summary_ja %}
-      <p class="text-xs text-slate-500 leading-relaxed mt-1.5 mb-2">{{ thesis.summary_ja }}</p>
+      {% if thesis.summary_ja and thesis.summary_ja | trim %}
+      <p class="text-xs text-slate-500 leading-relaxed mt-1.5 mb-2">
+        <span class="ai-summary-badge" title="論文PDFからAIで自動生成した要約">AI要約</span>{{ thesis.summary_ja }}
+      </p>
       {% endif %}
 
       {% if thesis.repo_url %}
