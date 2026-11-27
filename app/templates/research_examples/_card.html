@@ -1,0 +1,18 @@
+{% macro research_example_card(example) %}
+<a href="/research-examples/{{ example.id }}" class="card block min-w-0 break-words p-4 group focus-visible:outline-teal-700"
+   data-testid="research-example" data-thesis-id="{{ example.id }}">
+  <h3 class="text-sm font-semibold text-slate-800 leading-snug group-hover:text-teal-700">{{ example.title }}</h3>
+  <p class="text-xs text-slate-600 mt-1">
+    {% if example.year %}{{ example.year }}年 · {% endif %}{{ example.lab.name }}
+  </p>
+  <p class="text-xs text-slate-600 leading-relaxed mt-2">
+    <span class="ai-summary-badge" title="論文PDFからAIで自動生成した要約">AI要約</span>{{ example.summary_ja }}
+  </p>
+  {% set themes = example.thesis_labels | map(attribute='label') | reject('none') | selectattr('label_type', 'eq', 'theme') | unique(attribute='id') | sort(attribute='name') %}
+  {% if themes %}
+  <div class="flex flex-wrap gap-1 mt-2">
+    {% for label in themes %}<span class="badge badge-theme">{{ label.name }}</span>{% endfor %}
+  </div>
+  {% endif %}
+</a>
+{% endmacro %}

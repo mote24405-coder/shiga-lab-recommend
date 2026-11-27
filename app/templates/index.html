@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "research_examples/_card.html" import research_example_card %}
 {% block title %}滋賀大学DS研究科 研究室探索{% endblock %}
 {% block content %}
 
@@ -25,6 +26,25 @@
     </a>
   </div>
 </div>
+
+<section class="mb-10" aria-labelledby="research-examples-heading">
+  <div class="flex items-end justify-between flex-wrap gap-2 mb-3">
+    <div>
+      <h2 id="research-examples-heading" class="text-lg font-bold text-slate-800 tracking-tight">研究例から探す</h2>
+      <p class="text-xs text-slate-600 mt-1">実際の修士論文から、研究テーマの異なる例を選んでいます。要約は論文PDFからAIで自動生成したものです。</p>
+    </div>
+    {% if featured_examples %}
+    <a href="/research-examples" class="text-sm text-teal-700 hover:underline">もっと見る（{{ research_example_count }}件）→</a>
+    {% endif %}
+  </div>
+  {% if featured_examples %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for example in featured_examples %}{{ research_example_card(example) }}{% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-600">表示できる研究例はまだありません。</p>
+  {% endif %}
+</section>
 
 <!-- 3ステップ -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-px bg-slate-200 border border-slate-200 rounded-lg overflow-hidden mb-10">

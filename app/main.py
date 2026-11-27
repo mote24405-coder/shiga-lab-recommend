@@ -1,13 +1,17 @@
 import uuid
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app import crud
 from app.config import get_settings
-from app.routers import labs, teachers, theses, recommend, search, surveys, admin, explore
+from app.database import get_db
+from app.routers import labs, teachers, theses, recommend, search, surveys, admin, explore, research_examples
+from app.services.research_examples import select_featured_examples, sort_research_examples
 
 settings = get_settings()
 
@@ -37,11 +41,17 @@ app.include_router(search.router)
 app.include_router(surveys.router)
 app.include_router(admin.router)
 app.include_router(explore.router)
+app.include_router(research_examples.router)
 
 
 @app.get("/")
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def index(request: Request, db: AsyncSession = Depends(get_db)):
+    examples = sort_research_examples(await crud.list_research_example_candidates(db))
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "featured_examples": select_featured_examples(examples),
+        "research_example_count": len(examples),
+    })
 
 
 @app.get("/health")

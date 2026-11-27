@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "research_examples/_card.html" import research_example_card %}
+{% block title %}研究例一覧{% endblock %}
+{% block content %}
+
+<a href="/" class="inline-block text-sm text-teal-700 hover:underline mb-4">← トップへ戻る</a>
+<h1 class="text-2xl font-bold text-slate-800 tracking-tight mb-2">研究例一覧</h1>
+<p class="text-sm text-slate-600 leading-relaxed mb-5">実際の修士論文から、研究室と日本語要約が登録されたものを表示しています。要約は論文PDFからAIで自動生成したもので、内容は論文本文で確認してください。</p>
+
+<nav aria-label="研究テーマで絞り込む" class="flex flex-wrap gap-2 mb-4">
+  <a href="/research-examples" class="badge {% if selected_theme_id is none %}badge-theme{% else %}chip-idle{% endif %}"
+     {% if selected_theme_id is none %}aria-current="page"{% endif %}>すべて（{{ total_count }}件）</a>
+  {% for theme in themes %}
+  <a href="/research-examples?theme={{ theme.id }}" class="badge {% if theme.id == selected_theme_id %}badge-theme{% else %}chip-idle{% endif %}"
+     {% if theme.id == selected_theme_id %}aria-current="page"{% endif %}>{{ theme.name }}（{{ theme.example_count }}件）</a>
+  {% endfor %}
+</nav>
+
+{% if selected_theme %}
+<div class="flex items-baseline flex-wrap gap-2 mb-2">
+  <h2 class="text-lg font-semibold text-slate-800">「{{ selected_theme.name }}」の研究例</h2>
+  <a href="/research-examples" class="text-sm text-teal-700 hover:underline">絞り込みを解除</a>
+</div>
+{% else %}
+<h2 class="sr-only">検索結果</h2>
+{% endif %}
+<p data-testid="result-count" class="text-sm text-slate-600 mb-3">{{ examples | length }}件</p>
+
+{% if examples %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+  {% for example in examples %}{{ research_example_card(example) }}{% endfor %}
+</div>
+{% else %}
+<div data-testid="empty-state" class="card p-4 text-sm text-slate-600">
+  {% if selected_theme_id is none %}
+  <p>表示できる研究例はまだありません。</p>
+  {% else %}
+  <p>このテーマの研究例はありません。</p>
+  {% endif %}
+  <a href="/research-examples" class="inline-block text-teal-700 hover:underline mt-2">絞り込みを解除</a>
+</div>
+{% endif %}
+
+<p class="text-sm text-slate-600 mt-6">要約や研究室の対応が未登録の論文は<a href="/theses" class="text-teal-700 underline">修士論文一覧</a>で見られます。</p>
+{% endblock %}

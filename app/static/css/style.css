@@ -152,3 +152,37 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.ai-summary-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--c-muted);
+  background: #f1f5f9;
+  border: 1px solid var(--c-border);
+  vertical-align: 1px;
+}
+
+.chip-idle {
+  background: var(--c-surface);
+  color: var(--c-muted);
+  border-color: var(--c-border);
+}
+.chip-idle:hover { border-color: var(--c-primary); color: var(--c-primary); }
+
+.thesis-item { scroll-margin-top: 4rem; }
+.thesis-item:target {
+  background: var(--c-primary-lt);
+  box-shadow: inset 3px 0 0 var(--c-primary);
+}
+.selected-example-note { display: none; }
+.thesis-item:target .selected-example-note {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--c-primary);
+}
